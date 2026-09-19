@@ -53,17 +53,20 @@ export type CheckoutResult =
 // Order number — FCH-#### (sequential, collision-safe)
 // ---------------------------------------------------------------
 
-async function nextOrderNumber(): Promise<string> {
-  const latest = await db.order.findFirst({
-    orderBy: { createdAt: "desc" },
+async function nextOrderNumber(bump = 0): Promise<string> {
+  // Scan existing order numbers instead of trusting createdAt ordering —
+  // imports, clock skew or backdated rows make createdAt unreliable here.
+  // `bump` skips past numbers a concurrent checkout may have just taken.
+  const rows = await db.order.findMany({
+    where: { orderNo: { startsWith: "FCH-" } },
     select: { orderNo: true },
   });
   let max = 1000;
-  if (latest) {
-    const m = latest.orderNo.match(/^FCH-(\d+)$/);
+  for (const r of rows) {
+    const m = r.orderNo.match(/^FCH-(\d+)$/);
     if (m) max = Math.max(max, parseInt(m[1], 10));
   }
-  return `FCH-${max + 1}`;
+  return `FCH-${max + 1 + bump}`;
 }
 
 // ---------------------------------------------------------------
@@ -116,7 +119,13 @@ export async function createOrder(raw: CheckoutInput): Promise<CheckoutResult> {
   const freeThreshold = settings.freeShippingThreshold;
 
   try {
-    const result = await db.$transaction(async (tx) => {
+    // concurrent checkouts can race on the sequential order number — retry
+    // with a bumped number when the unique constraint trips (stock guards
+    // live inside the transaction, so a retry never double-reserves).
+    let result: { orderNo: string; total: number } | undefined;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        result = await db.$transaction(async (tx) => {
       // 1) reserve stock — atomic guard against oversell
       const reserved: { variantId: string; qty: number; name: string; color: string; size: string; unitPrice: number }[] = [];
       const seen = new Set<string>();
@@ -177,7 +186,7 @@ export async function createOrder(raw: CheckoutInput): Promise<CheckoutResult> {
       const total = subtotal - discount + shippingFee;
 
       // 5) order + items
-      const orderNo = await nextOrderNumber();
+      const orderNo = await nextOrderNumber(attempt);
       const order = await tx.order.create({
         data: {
           orderNo,
@@ -225,10 +234,16 @@ export async function createOrder(raw: CheckoutInput): Promise<CheckoutResult> {
       });
 
       return { orderNo, total };
-    });
+        });
+        break;
+      } catch (e) {
+        const code = (e as { code?: string })?.code;
+        if (code !== "P2002" || attempt === 2) throw e;
+      }
+    }
 
     revalidatePath("/admin");
-    return { ok: true, orderNo: result.orderNo, total: result.total };
+    return { ok: true, orderNo: result!.orderNo, total: result!.total };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not place your order. Please try again.";
     return { ok: false, message };
