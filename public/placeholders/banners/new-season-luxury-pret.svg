@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="700" viewBox="0 0 1920 700">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#23201B"/>
+      <stop offset="1" stop-color="#14120F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="700" fill="url(#bg)"/>
+  <g stroke="#B08D57" stroke-width="1" opacity="0.08">
+    <line x1="0" y1="0" x2="-200" y2="700"/>
+    <line x1="140" y1="0" x2="-60" y2="700"/>
+    <line x1="280" y1="0" x2="80" y2="700"/>
+    <line x1="420" y1="0" x2="220" y2="700"/>
+    <line x1="560" y1="0" x2="360" y2="700"/>
+    <line x1="700" y1="0" x2="500" y2="700"/>
+    <line x1="840" y1="0" x2="640" y2="700"/>
+    <line x1="980" y1="0" x2="780" y2="700"/>
+    <line x1="1120" y1="0" x2="920" y2="700"/>
+    <line x1="1260" y1="0" x2="1060" y2="700"/>
+    <line x1="1400" y1="0" x2="1200" y2="700"/>
+    <line x1="1540" y1="0" x2="1340" y2="700"/>
+    <line x1="1680" y1="0" x2="1480" y2="700"/>
+    <line x1="1820" y1="0" x2="1620" y2="700"/>
+  </g>
+  <rect x="60" y="60" width="1800" height="580" fill="none" stroke="#B08D57" stroke-width="1.5" opacity="0.65"/>
+  <text x="960" y="330" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="72" letter-spacing="10" fill="#F8F6F2">NEW SEASON LUXURY PRET</text>
+  <g stroke="#B08D57" stroke-width="2">
+    <line x1="810" y1="380" x2="1110" y2="380"/>
+  </g>
+  <text x="960" y="440" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="26" letter-spacing="6" fill="#C9B896">Handcrafted elegance, delivered nationwide</text>
+  <text x="960" y="600" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" letter-spacing="3" fill="#8A8378">FASHION AND COLLECTION HOUSE — PLACEHOLDER BANNER</text>
+</svg>

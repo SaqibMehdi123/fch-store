@@ -1,0 +1,180 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* shadcn/ui tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* FCH brand tokens */
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-ivory: var(--ivory);
+  --color-charcoal: var(--charcoal);
+  --color-stone: var(--stone);
+  --color-footer: var(--footer);
+  --color-footer-foreground: var(--footer-foreground);
+
+  /* fonts */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
+}
+
+:root {
+  /* FCH luxury palette */
+  --ivory: #f8f6f2; /* page background */
+  --charcoal: #1a1a1a; /* primary text */
+  --gold: #b08d57; /* accent */
+  --gold-soft: #c9b896; /* accent, lighter */
+  --gold-foreground: #ffffff;
+  --stone: #e7e2da; /* borders */
+  --footer: #161616; /* dark charcoal footer */
+  --footer-foreground: #d6d0c4;
+
+  --radius: 0.25rem; /* tailored, sharp luxury corners */
+  --background: #f8f6f2;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --primary: #1a1a1a; /* black fill buttons */
+  --primary-foreground: #f8f6f2;
+  --secondary: #efebe3;
+  --secondary-foreground: #1a1a1a;
+  --muted: #efebe3;
+  --muted-foreground: #6f695e;
+  --accent: #b08d57; /* gold accent */
+  --accent-foreground: #ffffff;
+  --destructive: #a03028;
+  --border: #e7e2da;
+  --input: #e7e2da;
+  --ring: #b08d57;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "liga" 1, "kern" 1;
+  }
+  ::selection {
+    background: var(--gold);
+    color: #fff;
+  }
+}
+
+@layer components {
+  /* uppercase letter-spaced label — signature luxury detail */
+  .label-caps {
+    @apply text-[11px] font-medium uppercase tracking-[0.18em];
+  }
+
+  /* thin divider */
+  .divider {
+    @apply border-0 h-px bg-border;
+  }
+
+  /* section heading in Playfair */
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* primary button: black fill, gold hover */
+  .btn-luxury {
+    @apply inline-flex items-center justify-center gap-2 bg-primary px-8 py-3 text-[12px] font-medium uppercase tracking-[0.18em] text-primary-foreground transition-colors duration-300 rounded-sm;
+  }
+  .btn-luxury:hover:not(:disabled) {
+    background-color: var(--gold);
+    color: var(--gold-foreground);
+  }
+  .btn-luxury:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* outline button: thin charcoal border, fills black on hover */
+  .btn-outline-luxury {
+    @apply inline-flex items-center justify-center gap-2 border border-foreground/80 bg-transparent px-8 py-3 text-[12px] font-medium uppercase tracking-[0.18em] text-foreground transition-colors duration-300 rounded-sm;
+  }
+  .btn-outline-luxury:hover:not(:disabled) {
+    @apply bg-primary text-primary-foreground;
+  }
+}
+
+/* subtle fade-in / fade-up animations */
+@keyframes fch-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fch-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fch-ken-burns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.07);
+  }
+}
+.animate-fade-in {
+  animation: fch-fade-in 0.7s ease both;
+}
+.animate-fade-up {
+  animation: fch-fade-up 0.7s ease both;
+}
+
+/* slim elegant scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ivory);
+}
+::-webkit-scrollbar-thumb {
+  background: #d8d2c6;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-soft);
+}
