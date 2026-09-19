@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Search, Heart, ShoppingBag, Menu } from "lucide-react";
 import { BrandLogo } from "@/components/brand/logo";
 import { WishlistCountBadge } from "@/components/store/wishlist-heart";
+import { CartCountBadge } from "@/components/store/cart-badge";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,7 @@ function SearchForm({ className, onSubmitted }: { className?: string; onSubmitte
   );
 }
 
-function IconButton({ href, label, children, showBadge }: { href: string; label: string; children: React.ReactNode; showBadge?: boolean }) {
+function IconButton({ href, label, children, showBadge, badgeKind }: { href: string; label: string; children: React.ReactNode; showBadge?: boolean; badgeKind?: "wishlist" | "cart" }) {
   return (
     <Link
       href={href}
@@ -43,7 +44,8 @@ function IconButton({ href, label, children, showBadge }: { href: string; label:
       className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:text-gold"
     >
       {children}
-      {showBadge && <WishlistCountBadge />}
+      {showBadge && badgeKind === "cart" && <CartCountBadge />}
+      {showBadge && badgeKind !== "cart" && <WishlistCountBadge />}
     </Link>
   );
 }
@@ -142,7 +144,7 @@ export function SiteHeader() {
           <IconButton href="/wishlist" label="Wishlist" showBadge>
             <Heart className="h-5 w-5" strokeWidth={1.8} />
           </IconButton>
-          <IconButton href="/cart" label="Cart">
+          <IconButton href="/cart" label="Cart" showBadge badgeKind="cart">
             <ShoppingBag className="h-5 w-5" strokeWidth={1.8} />
           </IconButton>
         </div>
@@ -159,7 +161,7 @@ export function SiteHeader() {
           <IconButton href="/wishlist" label="Wishlist" showBadge>
             <Heart className="h-5 w-5" strokeWidth={1.8} />
           </IconButton>
-          <IconButton href="/cart" label="Cart">
+          <IconButton href="/cart" label="Cart" showBadge badgeKind="cart">
             <ShoppingBag className="h-5 w-5" strokeWidth={1.8} />
           </IconButton>
         </div>

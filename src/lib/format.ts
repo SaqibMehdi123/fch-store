@@ -71,3 +71,14 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
   expired: "Expired",
 };
+
+/**
+ * Digits-only phone core (3XXXXXXXXX) for order-lookup matching —
+ * lets 03XX-XXXXXXX, 03XXXXXXXXX and +92 3XX XXXXXXX match the same order.
+ */
+export function phoneCore(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("92")) return digits.slice(2);
+  if (digits.startsWith("0")) return digits.slice(1);
+  return digits;
+}

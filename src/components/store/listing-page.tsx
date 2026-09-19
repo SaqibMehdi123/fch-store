@@ -65,7 +65,7 @@ export async function ListingPage({
   ]);
 
   const deptName = dept?.root.name ?? null;
-  const copy = deptName ? DEPARTMENT_COPY[dept.root.slug] : undefined;
+  const copy = dept ? DEPARTMENT_COPY[dept.root.slug] : undefined;
 
   const title = branch
     ? branch.category.name
@@ -90,7 +90,7 @@ export async function ListingPage({
           <Link href={query.base} className="transition-colors hover:text-gold">
             {deptName ?? "Shop"}
           </Link>
-          {activeTop && deptName && activeTop.slug !== dept.root.slug && (
+          {activeTop && dept && activeTop.slug !== dept.root.slug && (
             <>
               <span aria-hidden className="mx-2">/</span>
               <span className="text-foreground/70">{activeTop.name}</span>

@@ -147,7 +147,10 @@ export default async function ProductPage({ params }: { params: Params }) {
           {/* variants */}
           <div className="mt-8">
             <VariantPicker
+              slug={product.slug}
               productName={product.name}
+              image={product.images[0] ?? null}
+              price={product.salePrice && product.salePrice < product.price ? product.salePrice : product.price}
               variants={product.variants}
               whatsappNumber={settings.whatsappNumber}
             />

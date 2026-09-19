@@ -31,6 +31,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
+!.env.example
 .env*
 
 # vercel
@@ -52,3 +53,33 @@ prompt
 server.log
 # Skills directory
 /skills/scripts/
+
+# Payment screenshots (sandbox fallback storage)
+uploads/
+
+# ---- FCH project hygiene (sandbox + secrets + artifacts) ----
+# local embedded PostgreSQL data dir
+/.pglocal/
+# sandbox runtime / internal tooling
+/.zscripts/
+/mini-services/
+/Caddyfile
+# internal notes, requirement docs, verification artifacts
+/worklog.md
+/download/
+/upload/
+# old SQLite db (dev moved to Postgres)
+/db/
+# scaffold examples not part of the store
+/examples/
+# GitHub push credentials — NEVER commit
+/scripts/git-askpass.sh
+/scripts/*.pid
+/scripts/*.png
+# local payment-screenshot fallback storage
+/uploads/
+# misc
+/dev.out.log
+/server.log
+prompt
+test

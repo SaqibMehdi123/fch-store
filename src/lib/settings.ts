@@ -67,3 +67,4 @@ export const getSettings = cache(async (): Promise<SiteSettings> => {
     return DEFAULTS;
   }
 });
+

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ShoppingBag, MessageCircle, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sortSizes } from "@/lib/sizes";
+import { useCart } from "@/lib/cart";
 import { SizeChartDialog } from "@/components/store/size-chart-dialog";
 import type { VariantOption } from "@/lib/products";
 
@@ -14,14 +15,21 @@ import type { VariantOption } from "@/lib/products";
  * Out-of-stock variants stay visible but disabled, labelled "Out of Stock".
  */
 export function VariantPicker({
+  slug,
   productName,
+  image,
+  price,
   variants,
   whatsappNumber,
 }: {
+  slug: string;
   productName: string;
+  image: string | null;
+  price: number;
   variants: VariantOption[];
   whatsappNumber: string;
 }) {
+  const { add } = useCart();
   const colors = useMemo(() => {
     const map = new Map<string, { name: string; hex: string; inStock: boolean }>();
     for (const v of variants) {
@@ -152,12 +160,24 @@ export function VariantPicker({
       <div className="flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
-          disabled={outOfStock}
-          onClick={() =>
-            toast("Cart & checkout launch in the next phase", {
-              description: "You can already place this order on WhatsApp — we'll confirm it personally.",
-            })
-          }
+          disabled={outOfStock || !selected}
+          onClick={() => {
+            if (!selected) return;
+            add({
+              variantId: selected.id,
+              slug,
+              name: productName,
+              color,
+              colorHex: selected.colorHex,
+              size: selected.size,
+              price,
+              image,
+            });
+            toast(`${productName} added to bag`, {
+              description: `${color} · Size ${selected.size} — ${selected.sku}`,
+              action: { label: "View bag", onClick: () => (window.location.href = "/cart") },
+            });
+          }}
           className="btn-luxury flex-1 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ShoppingBag className="h-4 w-4" /> {outOfStock ? "Out of Stock" : "Add to Cart"}

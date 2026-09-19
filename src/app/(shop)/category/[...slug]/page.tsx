@@ -33,7 +33,7 @@ export default async function CategoryRoute({
   for (const [key, value] of Object.entries(sp)) {
     if (key === "category") continue;
     if (Array.isArray(value)) value.forEach((v) => target.append(key, v));
-    else if (value !== undefined) target.set(key, v);
+    else if (value !== undefined) target.set(key, value);
   }
   redirect(`${base}?${target.toString()}`);
 }
