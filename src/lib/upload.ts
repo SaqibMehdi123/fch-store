@@ -66,3 +66,54 @@ export async function savePaymentScreenshot(file: File, orderNo: string): Promis
   if (cloudinaryConfigured()) return uploadToCloudinary(file, orderNo);
   return saveLocally(file, orderNo);
 }
+
+// ---------------------------------------------------------------
+// Phase 4 — public storefront media (banners, product photos)
+// ---------------------------------------------------------------
+
+/**
+ * Storefront media upload.
+ * - Production: Cloudinary (auto-optimised, WebP via next/image in Phase 6).
+ * - Sandbox/dev fallback: persisted under public/uploads/media and served
+ *   statically. Filenames are unguessable; only admins can upload.
+ */
+async function uploadMediaToCloudinary(file: File, folder: string): Promise<string> {
+  const cloud = process.env.CLOUDINARY_CLOUD_NAME!;
+  const apiKey = process.env.CLOUDINARY_API_KEY!;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET!;
+  const timestamp = Math.floor(Date.now() / 1000);
+  const publicId = `${folder}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  // params must be alphabetical in the signature
+  const signature = createHash("sha1")
+    .update(`folder=${folder}&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
+    .digest("hex");
+
+  const form = new FormData();
+  form.append("file", file);
+  form.append("api_key", apiKey);
+  form.append("timestamp", String(timestamp));
+  form.append("folder", folder);
+  form.append("public_id", publicId);
+  form.append("signature", signature);
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/image/upload`, { method: "POST", body: form });
+  if (!res.ok) throw new Error(`Cloudinary upload failed (${res.status})`);
+  const json = (await res.json()) as { secure_url?: string };
+  if (!json.secure_url) throw new Error("Cloudinary upload returned no URL");
+  return json.secure_url;
+}
+
+async function saveMediaLocally(file: File, folder: string): Promise<string> {
+  const ext = ALLOWED_MIME[file.type] ?? "jpg";
+  const name = `${folder}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const dir = path.join(process.cwd(), "public", "uploads", "media");
+  await mkdir(dir, { recursive: true });
+  await writeFile(path.join(dir, name), Buffer.from(await file.arrayBuffer()));
+  return `/uploads/media/${name}`;
+}
+
+/** Persist a storefront image; returns the public URL to store. */
+export async function saveMediaImage(file: File, folder = "media"): Promise<string> {
+  if (cloudinaryConfigured()) return uploadMediaToCloudinary(file, folder);
+  return saveMediaLocally(file, folder);
+}

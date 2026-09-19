@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { toNumber } from "@/lib/format";
-import type { OrderStatus, PaymentStatus } from "@prisma/client";
+import type { OrderStatus, PaymentStatus, ReviewStatus } from "@prisma/client";
 
 /**
  * Phase 3 — admin read layer. Server-only (imports @/lib/db); every function
@@ -388,4 +388,191 @@ export async function listInventory(opts: { q?: string; filter?: string }) {
     lowCount,
     totalCount,
   };
+}
+
+// ---------------------------------------------------------------
+// Phase 4 — content & marketing modules
+// ---------------------------------------------------------------
+
+export type AdminCouponRow = {
+  id: string;
+  code: string;
+  type: "percent" | "fixed";
+  value: number;
+  minOrderAmount: number | null;
+  maxDiscount: number | null;
+  startsAt: string;
+  expiresAt: string | null;
+  usageLimit: number | null;
+  usedCount: number;
+  isActive: boolean;
+};
+
+export async function listAdminCoupons(opts: { q?: string } = {}) {
+  const q = opts.q?.trim() ?? "";
+  const rows = await db.coupon.findMany({
+    where: q ? { code: { contains: q, mode: "insensitive" } } : undefined,
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+  const activeCount = await db.coupon.count({ where: { isActive: true } });
+
+  const mapped: AdminCouponRow[] = rows.map((c) => ({
+    id: c.id,
+    code: c.code,
+    type: c.type === "percent" ? "percent" : "fixed",
+    value: toNumber(c.value),
+    minOrderAmount: c.minOrderAmount ? toNumber(c.minOrderAmount) : null,
+    maxDiscount: c.maxDiscount ? toNumber(c.maxDiscount) : null,
+    startsAt: c.startsAt.toISOString(),
+    expiresAt: c.expiresAt?.toISOString() ?? null,
+    usageLimit: c.usageLimit,
+    usedCount: c.usedCount,
+    isActive: c.isActive,
+  }));
+  return { rows: mapped, activeCount, totalCount: mapped.length };
+}
+
+export type AdminReviewRow = {
+  id: string;
+  productName: string;
+  productSlug: string;
+  name: string;
+  email: string;
+  rating: number;
+  title: string | null;
+  body: string;
+  isVerifiedPurchase: boolean;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+};
+
+export async function listAdminReviews(opts: { status?: string } = {}) {
+  const status = ["pending", "approved", "rejected"].includes(opts.status ?? "")
+    ? (opts.status as ReviewStatus)
+    : "pending";
+
+  const [rows, pendingCount, approvedCount, rejectedCount] = await Promise.all([
+    db.review.findMany({
+      where: { status },
+      orderBy: { createdAt: "asc" },
+      take: 100,
+      include: { product: { select: { name: true, slug: true } } },
+    }),
+    db.review.count({ where: { status: "pending" } }),
+    db.review.count({ where: { status: "approved" } }),
+    db.review.count({ where: { status: "rejected" } }),
+  ]);
+
+  const mapped: AdminReviewRow[] = rows.map((r) => ({
+    id: r.id,
+    productName: r.product.name,
+    productSlug: r.product.slug,
+    name: r.name,
+    email: r.email,
+    rating: r.rating,
+    title: r.title,
+    body: r.body,
+    isVerifiedPurchase: r.isVerifiedPurchase,
+    status: r.status as AdminReviewRow["status"],
+    createdAt: r.createdAt.toISOString(),
+  }));
+  return { rows: mapped, pendingCount, approvedCount, rejectedCount };
+}
+
+export type AdminBannerRow = {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  imageUrl: string;
+  linkUrl: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+};
+
+export async function listAdminBanners() {
+  const [rows, activeCount] = await Promise.all([
+    db.banner.findMany({ orderBy: [{ isActive: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }] }),
+    db.banner.count({ where: { isActive: true } }),
+  ]);
+
+  const mapped: AdminBannerRow[] = rows.map((b) => ({
+    id: b.id,
+    title: b.title,
+    subtitle: b.subtitle,
+    imageUrl: b.imageUrl,
+    linkUrl: b.linkUrl,
+    sortOrder: b.sortOrder,
+    isActive: b.isActive,
+    startsAt: b.startsAt?.toISOString() ?? null,
+    endsAt: b.endsAt?.toISOString() ?? null,
+  }));
+  return { rows: mapped, activeCount, totalCount: mapped.length };
+}
+
+export type AdminZoneRow = {
+  id: string;
+  name: string;
+  cities: string;
+  rate: number;
+  etaDays: number;
+  isActive: boolean;
+  orderCount: number;
+};
+
+export async function listAdminZones() {
+  const rows = await db.deliveryZone.findMany({
+    orderBy: [{ isActive: "desc" }, { name: "asc" }],
+    include: { _count: { select: { orders: true } } },
+  });
+  const activeCount = await db.deliveryZone.count({ where: { isActive: true } });
+
+  const mapped: AdminZoneRow[] = rows.map((z) => ({
+    id: z.id,
+    name: z.name,
+    cities: z.cities,
+    rate: toNumber(z.rate),
+    etaDays: z.etaDays,
+    isActive: z.isActive,
+    orderCount: z._count.orders,
+  }));
+  return { rows: mapped, activeCount, totalCount: mapped.length };
+}
+
+export async function listAdminPages() {
+  const rows = await db.page.findMany({ orderBy: { slug: "asc" } });
+  return rows.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    isActive: p.isActive,
+    contentLength: p.content.length,
+    updatedAt: p.updatedAt.toISOString(),
+  }));
+}
+
+export async function getAdminPage(id: string) {
+  return db.page.findUnique({ where: { id } });
+}
+
+export type TeamMember = {
+  id: string;
+  name: string;
+  email: string;
+  role: "owner" | "admin";
+  createdAt: string;
+};
+
+export async function listTeamMembers() {
+  const rows = await db.adminUser.findMany({ orderBy: { createdAt: "asc" } });
+  const mapped: TeamMember[] = rows.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role as TeamMember["role"],
+    createdAt: u.createdAt.toISOString(),
+  }));
+  return mapped;
 }

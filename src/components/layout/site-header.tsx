@@ -130,7 +130,7 @@ export function SiteHeader() {
             <div className="border-b border-stone p-4">
               <SheetTitle asChild>
                 <div>
-                  <BrandLogo full={false} />
+                  <BrandLogo size={34} />
                 </div>
               </SheetTitle>
             </div>
@@ -139,7 +139,7 @@ export function SiteHeader() {
             </Suspense>
           </SheetContent>
         </Sheet>
-        <BrandLogo full={false} className="absolute left-1/2 -translate-x-1/2" />
+        <BrandLogo size={32} className="absolute left-1/2 -translate-x-1/2" />
         <div className="flex items-center">
           <IconButton href="/wishlist" label="Wishlist" showBadge>
             <Heart className="h-5 w-5" strokeWidth={1.8} />
@@ -152,7 +152,7 @@ export function SiteHeader() {
 
       {/* desktop row */}
       <div className="mx-auto hidden h-16 max-w-7xl items-center justify-between gap-8 px-6 md:flex">
-        <BrandLogo />
+        <BrandLogo size={44} />
         <Suspense fallback={<div className="h-6 w-64" aria-hidden />}>
           <NavLinks variant="desktop" />
         </Suspense>

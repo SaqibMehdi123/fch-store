@@ -33,9 +33,9 @@ export async function SiteFooter() {
   return (
     <footer className="mt-auto bg-footer text-footer-foreground">
       <div className="mx-auto max-w-7xl px-6 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-        {/* brand */}
+        {/* brand — the hallmark mark only, no stacked name */}
         <div>
-          <BrandLogo light />
+          <BrandLogo light size={58} />
           <p className="mt-4 text-sm leading-6 text-footer-foreground/80 max-w-xs">
             Premium Pakistani clothing, delivered nationwide. Thoughtfully made, carefully packed, honestly priced.
           </p>

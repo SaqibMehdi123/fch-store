@@ -20,19 +20,16 @@ import {
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-const DEPARTMENT_COPY: Record<string, { tagline: string; blurb: string }> = {
+const DEPARTMENT_COPY: Record<string, { blurb: string }> = {
   women: {
-    tagline: "The Women's Edit",
     blurb:
       "Pret, unstitched classics and occasion formals — designed for the modern Pakistani wardrobe, from everyday lawn to evening luxury.",
   },
   men: {
-    tagline: "The Men's Edit",
     blurb:
       "Kurta shalwar, waistcoats and tailored separates — considered fabrics and clean cuts for every day and every occasion.",
   },
   kids: {
-    tagline: "The Kids' Edit",
     blurb:
       "Soft, durable essentials for boys and girls — playful pieces cut from breathable fabrics that keep up with the day.",
   },
@@ -66,7 +63,6 @@ export async function ListingPage({
 
   const deptName = dept?.root.name ?? null;
   const copy = dept ? DEPARTMENT_COPY[dept.root.slug] : undefined;
-
   const title = branch
     ? branch.category.name
     : deptName
@@ -78,7 +74,6 @@ export async function ListingPage({
           : "Shop All";
 
   const activeTop = branch?.category ?? null;
-  const bannerImage = dept?.root.imageUrl ?? null;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8 lg:py-12">
@@ -100,8 +95,7 @@ export async function ListingPage({
         {copy ? (
           <div className="mt-3 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-2xl">
-              <p className="label-caps text-gold">{copy.tagline}</p>
-              <h1 className="mt-2 font-display text-3xl sm:text-4xl">{deptName}</h1>
+              <h1 className="font-display text-3xl sm:text-4xl">{deptName}</h1>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{copy.blurb}</p>
             </div>
             <p className="shrink-0 text-sm text-muted-foreground sm:text-right">
@@ -118,25 +112,6 @@ export async function ListingPage({
           </>
         )}
       </header>
-
-      {/* department banner */}
-      {bannerImage && !query.categorySlug && (
-        <div className="relative mt-6 hidden h-36 overflow-hidden rounded-sm border border-stone lg:block">
-          <img
-            src={bannerImage}
-            alt=""
-            aria-hidden
-            className="h-full w-full object-cover object-top"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/40 to-transparent" />
-          <div className="absolute inset-y-0 left-8 flex flex-col justify-center">
-            <p className="font-display text-2xl italic text-foreground">{copy?.tagline}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Free delivery on orders above Rs. 10,000
-            </p>
-          </div>
-        </div>
-      )}
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[230px_1fr]">
         <FilterSidebar tree={tree} facets={facets} query={query} dept={dept?.root ?? null} />

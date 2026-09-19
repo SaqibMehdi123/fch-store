@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="72" height="64" viewBox="0 0 72 64">
-  <!-- FCH hallmark monogram -->
+  <!-- FCH hallmark monogram (light, for dark surfaces) -->
   <path d="M36 2.5 L69.5 32 L36 61.5 L2.5 32 Z" fill="none" stroke="#B08D57" stroke-width="1.6"/>
   <path d="M36 8.5 L63.5 32 L36 55.5 L8.5 32 Z" fill="none" stroke="#B08D57" stroke-width="0.8" opacity="0.55"/>
-  <text x="35.25" y="33.5" text-anchor="middle" dominant-baseline="central" font-family="Georgia, 'Times New Roman', serif" font-size="15" letter-spacing="1.5" fill="#1A1A1A">FCH</text>
+  <text x="35.25" y="33.5" text-anchor="middle" dominant-baseline="central" font-family="Georgia, 'Times New Roman', serif" font-size="15" letter-spacing="1.5" fill="#F8F6F2">FCH</text>
 </svg>

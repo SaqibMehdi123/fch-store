@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { LogOut, Menu, ExternalLink } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { BrandLogo } from "@/components/brand/logo";
 import { ADMIN_NAV } from "@/lib/admin-nav";
 import { cn } from "@/lib/utils";
 
@@ -84,11 +85,10 @@ export function AdminShell({
       {/* desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-stone bg-card lg:flex">
         <div className="flex h-16 items-center gap-3 border-b border-stone px-5">
-          { }
-          <img src="/logo.svg" alt="FCH" className="h-8 w-8" />
+          <BrandLogo light size={34} href="/admin" />
           <div>
-            <p className="font-display text-base leading-none">FCH</p>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Admin Panel</p>
+            <p className="font-display text-base leading-none">Admin Panel</p>
+            <p className="mt-0.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Fashion &amp; Collection House</p>
           </div>
         </div>
         <SidebarNav />
@@ -109,9 +109,8 @@ export function AdminShell({
               <SheetContent side="left" className="w-64 p-0 flex flex-col">
                 <div className="flex h-14 items-center gap-3 border-b border-stone px-5">
                   <SheetTitle className="sr-only">Admin navigation</SheetTitle>
-                  { }
-                  <img src="/logo.svg" alt="FCH" className="h-8 w-8" />
-                  <p className="font-display">FCH Admin</p>
+                  <BrandLogo light size={30} href="/admin" />
+                  <p className="font-display">Admin Panel</p>
                 </div>
                 <SidebarNav onNavigate={() => setOpen(false)} />
                 <UserBlock user={user} />

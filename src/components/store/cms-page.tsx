@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Markdown from "react-markdown";
 import { db } from "@/lib/db";
+import { CMS_MARKDOWN_COMPONENTS } from "@/lib/cms-markdown";
 
 /**
  * Renders a markdown page from the `pages` table (About / FAQ / Terms / Privacy).
@@ -29,28 +30,7 @@ export async function CmsPage({ slug }: { slug: string }) {
         className="mt-8"
         // DB content is owner-controlled markdown; no raw HTML is rendered.
       >
-        <Markdown
-          components={{
-            h2: (props) => (
-              <h2
-                className="mt-10 border-b border-stone pb-2 font-display text-2xl first:mt-0"
-                {...props}
-              />
-            ),
-            h3: (props) => <h3 className="mt-8 font-display text-xl" {...props} />,
-            p: (props) => <p className="mt-4 text-[15px] leading-7 text-foreground/85" {...props} />,
-            ul: (props) => <ul className="mt-4 list-disc space-y-1.5 pl-5 text-[15px] leading-7 text-foreground/85" {...props} />,
-            ol: (props) => <ol className="mt-4 list-decimal space-y-1.5 pl-5 text-[15px] leading-7 text-foreground/85" {...props} />,
-            a: (props) => <a className="text-gold underline underline-offset-2 hover:text-foreground" {...props} />,
-            strong: (props) => <strong className="font-semibold text-foreground" {...props} />,
-            blockquote: (props) => (
-              <blockquote className="mt-6 border-l-2 border-gold pl-4 italic text-foreground/75" {...props} />
-            ),
-            hr: () => <div className="divider my-8" />,
-          }}
-        >
-          {page.content}
-        </Markdown>
+        <Markdown components={CMS_MARKDOWN_COMPONENTS}>{page.content}</Markdown>
       </article>
 
       {/* help footer */}
