@@ -172,6 +172,34 @@ export const getCategoryBranch = cache(
   }
 );
 
+/**
+ * Resolve a department (top-level category) for its own listing page.
+ * Returns the department's subtree (with counts) + all category ids in scope.
+ */
+export const getDepartment = cache(
+  async (slug: string): Promise<{ root: CategoryNode; categoryIds: string[] } | null> => {
+    const [branch, tree] = await Promise.all([getCategoryBranch(slug), getCategoryTree()]);
+    if (!branch || branch.category.parentId !== null) return null;
+    const root = tree.find((t) => t.slug === slug);
+    if (!root) return null;
+    return { root, categoryIds: branch.categoryIds };
+  }
+);
+
+/** Root (top-level ancestor) slug of a category — used by the /category/* redirect. */
+export async function getCategoryRootSlug(slug: string): Promise<string | null> {
+  const cats = await db.category.findMany({ where: { isActive: true } });
+  const byId = new Map(cats.map((c) => [c.id, c]));
+  let cur = cats.find((c) => c.slug === slug);
+  if (!cur) return null;
+  while (cur.parentId) {
+    const parent = byId.get(cur.parentId);
+    if (!parent) break;
+    cur = parent;
+  }
+  return cur.slug;
+}
+
 // ---------------------------------------------------------------
 // Shop listing — query parsing/URL helpers live in lib/shop-url.ts
 // (client-safe); re-exported here for server pages.
@@ -190,9 +218,15 @@ export type ShopResult = {
 
 export async function listProducts(query: ShopQuery): Promise<ShopResult> {
   const branch = query.categorySlug ? await getCategoryBranch(query.categorySlug) : null;
+  const dept = query.department ? await getCategoryBranch(query.department) : null;
+  // A department filter that matches nothing (e.g. unknown slug) yields an empty list.
+  if (query.department && !dept) {
+    return { items: [], total: 0, page: 1, pageCount: 1, perPage: PER_PAGE };
+  }
 
   const and: Prisma.ProductWhereInput[] = [{ isActive: true }];
 
+  if (dept) and.push({ categoryId: { in: dept.categoryIds } });
   if (branch) and.push({ categoryId: { in: branch.categoryIds } });
 
   // variant-level filters (size / color / availability)
@@ -277,39 +311,57 @@ export type FilterFacets = {
   priceMax: number;
 };
 
-export const getFilterFacets = cache(async (): Promise<FilterFacets> => {
-  const [variants, products] = await Promise.all([
-    db.variant.findMany({
-      where: { product: { isActive: true } },
-      distinct: ["size"],
-      select: { size: true },
-    }),
-    db.product.findMany({
-      where: { isActive: true },
-      select: { price: true, salePrice: true },
-    }),
-  ]);
+/**
+ * Facets for the filter sidebar. When a department slug is given, facets are
+ * scoped to that department only — e.g. the Kids page offers kids sizes and
+ * only colours that actually occur in the Kids range.
+ */
+export const getFilterFacets = cache(
+  async (departmentSlug?: string | null): Promise<FilterFacets> => {
+    let categoryIds: string[] | null = null;
+    if (departmentSlug) {
+      const branch = await getCategoryBranch(departmentSlug);
+      categoryIds = branch?.categoryIds ?? null;
+    }
 
-  const sizeRank = new Map(SIZE_ORDER.map((s, i) => [s, i]));
-  const sizes = variants
-    .map((v) => v.size)
-    .sort((a, b) => (sizeRank.get(a) ?? 999) - (sizeRank.get(b) ?? 999) || a.localeCompare(b));
+    const productWhere: Prisma.ProductWhereInput = {
+      isActive: true,
+      ...(categoryIds ? { categoryId: { in: categoryIds } } : {}),
+    };
 
-  const colorRows = await db.variant.findMany({
-    where: { product: { isActive: true } },
-    distinct: ["colorName"],
-    select: { colorName: true, colorHex: true },
-    orderBy: { colorName: "asc" },
-  });
+    const [variants, products] = await Promise.all([
+      db.variant.findMany({
+        where: { product: productWhere },
+        distinct: ["size"],
+        select: { size: true },
+      }),
+      db.product.findMany({
+        where: productWhere,
+        select: { price: true, salePrice: true },
+      }),
+    ]);
 
-  const prices = products.map(effective);
-  return {
-    sizes,
-    colors: colorRows.map((c) => ({ name: c.colorName, hex: c.colorHex })),
-    priceMin: prices.length ? Math.floor(Math.min(...prices)) : 0,
-    priceMax: prices.length ? Math.ceil(Math.max(...prices)) : 20000,
-  };
-});
+    const sizeRank = new Map(SIZE_ORDER.map((s, i) => [s, i]));
+    const sizes = variants
+      .map((v) => v.size)
+      .sort((a, b) => (sizeRank.get(a) ?? 999) - (sizeRank.get(b) ?? 999) || a.localeCompare(b));
+
+    const colorRows = await db.variant.findMany({
+      where: { product: productWhere },
+      distinct: ["colorName"],
+      select: { colorName: true, colorHex: true },
+      orderBy: { colorName: "asc" },
+    });
+
+    const prices = products.map(effective);
+    return {
+      sizes,
+      colors: colorRows.map((c) => ({ name: c.colorName, hex: c.colorHex })),
+      priceMin: prices.length ? Math.floor(Math.min(...prices)) : 0,
+      priceMax: prices.length ? Math.ceil(Math.max(...prices)) : 20000,
+    };
+  }
+);
 
 // ---------------------------------------------------------------
 // Product detail

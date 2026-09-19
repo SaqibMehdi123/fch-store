@@ -22,13 +22,17 @@ import type { CategoryNode, FilterFacets, ShopQuery, ShopResult, SortKey } from 
 // Shared filter panel content
 // ---------------------------------------------------------------
 
-function CategoryList({
-  tree,
+/**
+ * Category refinement for a department page: only that department's own
+ * sub-categories appear — other departments are never shown here.
+ */
+function DepartmentCategoryList({
+  dept,
   query,
   activeSlug,
   onNavigate,
 }: {
-  tree: CategoryNode[];
+  dept: CategoryNode;
   query: ShopQuery;
   activeSlug: string | null;
   onNavigate?: () => void;
@@ -45,30 +49,31 @@ function CategoryList({
             activeSlug === null ? "font-semibold text-gold" : "text-foreground/80"
           )}
         >
-          All Clothing
+          All {dept.name}
         </Link>
       </li>
-      {tree.map((top) => (
-        <li key={top.id}>
+      {dept.children.map((child) => (
+        <li key={child.id}>
           <Link
-            href={shopHref(query, { categorySlug: top.slug })}
+            href={shopHref(query, { categorySlug: child.slug })}
             onClick={onNavigate}
-            aria-current={activeSlug === top.slug ? "true" : undefined}
+            aria-current={activeSlug === child.slug ? "true" : undefined}
             className={cn(
               "block py-0.5 text-sm transition-colors hover:text-gold",
-              activeSlug === top.slug ? "font-semibold text-gold" : "font-medium text-foreground/90"
+              activeSlug === child.slug ? "font-semibold text-gold" : "text-foreground/80"
             )}
           >
-            {top.name}
+            {child.name}
+            {child.count > 0 && <span className="ml-1.5 text-[11px] text-muted-foreground/70">({child.count})</span>}
           </Link>
-          {top.children.length > 0 && (
+          {child.children.length > 0 && (
             <ul className="ml-3 mt-1 space-y-1.5 border-l border-stone pl-3">
-              {top.children.map((child) => {
-                const active = activeSlug === child.slug;
+              {child.children.map((gc) => {
+                const active = activeSlug === gc.slug;
                 return (
-                  <li key={child.id}>
+                  <li key={gc.id}>
                     <Link
-                      href={shopHref(query, { categorySlug: child.slug })}
+                      href={shopHref(query, { categorySlug: gc.slug })}
                       onClick={onNavigate}
                       aria-current={active ? "true" : undefined}
                       className={cn(
@@ -76,38 +81,42 @@ function CategoryList({
                         active ? "font-semibold text-gold" : "text-foreground/70"
                       )}
                     >
-                      {child.name}
-                      {child.count > 0 && <span className="ml-1.5 text-[11px] text-muted-foreground/70">({child.count})</span>}
+                      {gc.name}
+                      {gc.count > 0 && <span className="ml-1.5 text-[11px] text-muted-foreground/70">({gc.count})</span>}
                     </Link>
-                    {/* third level (e.g. Unstitched → 3-Piece) */}
-                    {child.children.length > 0 && (
-                      <ul className="ml-3 mt-1 space-y-1.5 border-l border-stone/70 pl-3">
-                        {child.children.map((gc) => {
-                          const gcActive = activeSlug === gc.slug;
-                          return (
-                            <li key={gc.id}>
-                              <Link
-                                href={shopHref(query, { categorySlug: gc.slug })}
-                                onClick={onNavigate}
-                                aria-current={gcActive ? "true" : undefined}
-                                className={cn(
-                                  "block py-0.5 text-[13px] transition-colors hover:text-gold",
-                                  gcActive ? "font-semibold text-gold" : "text-foreground/60"
-                                )}
-                              >
-                                {gc.name}
-                                {gc.count > 0 && <span className="ml-1.5 text-[11px] text-muted-foreground/70">({gc.count})</span>}
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
                   </li>
                 );
               })}
             </ul>
           )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Shop All page — a light row of department links instead of the full tree. */
+function DepartmentSwitcher({
+  tree,
+  query,
+  onNavigate,
+}: {
+  tree: CategoryNode[];
+  query: ShopQuery;
+  onNavigate?: () => void;
+}) {
+  return (
+    <ul className="space-y-1.5">
+      {tree.map((top) => (
+        <li key={top.id}>
+          <Link
+            href={`/${top.slug}`}
+            onClick={onNavigate}
+            className="flex items-center justify-between py-0.5 text-sm text-foreground/80 transition-colors hover:text-gold"
+          >
+            {top.name}
+            {top.count > 0 && <span className="text-[11px] text-muted-foreground/70">({top.count})</span>}
+          </Link>
         </li>
       ))}
     </ul>
@@ -293,11 +302,13 @@ function FilterGroup({ title, children }: { title: string; children: React.React
 }
 
 function FilterPanel({
+  dept,
   tree,
   facets,
   query,
   onNavigate,
 }: {
+  dept: CategoryNode | null;
   tree: CategoryNode[];
   facets: FilterFacets;
   query: ShopQuery;
@@ -325,9 +336,15 @@ function FilterPanel({
         </Link>
       )}
 
-      <FilterGroup title="Category">
-        <CategoryList tree={tree} query={query} activeSlug={query.categorySlug} onNavigate={onNavigate} />
-      </FilterGroup>
+      {dept ? (
+        <FilterGroup title="Category">
+          <DepartmentCategoryList dept={dept} query={query} activeSlug={query.categorySlug} onNavigate={onNavigate} />
+        </FilterGroup>
+      ) : (
+        <FilterGroup title="Department">
+          <DepartmentSwitcher tree={tree} query={query} onNavigate={onNavigate} />
+        </FilterGroup>
+      )}
 
       <FilterGroup title="Size">
         <SizeChips query={query} sizes={facets.sizes} onNavigate={onNavigate} />
@@ -352,7 +369,12 @@ function FilterPanel({
 // Exported pieces used by the shop page
 // ---------------------------------------------------------------
 
-export function FilterSidebar(props: { tree: CategoryNode[]; facets: FilterFacets; query: ShopQuery }) {
+export function FilterSidebar(props: {
+  dept: CategoryNode | null;
+  tree: CategoryNode[];
+  facets: FilterFacets;
+  query: ShopQuery;
+}) {
   return (
     <aside aria-label="Product filters" className="hidden lg:block">
       <FilterPanel {...props} />
@@ -360,7 +382,13 @@ export function FilterSidebar(props: { tree: CategoryNode[]; facets: FilterFacet
   );
 }
 
-export function MobileFilters(props: { tree: CategoryNode[]; facets: FilterFacets; query: ShopQuery; total: number }) {
+export function MobileFilters(props: {
+  dept: CategoryNode | null;
+  tree: CategoryNode[];
+  facets: FilterFacets;
+  query: ShopQuery;
+  total: number;
+}) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 

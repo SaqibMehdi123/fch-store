@@ -53,7 +53,7 @@ export default async function HomePage() {
           {data.categories.map((cat, i) => (
             <Link
               key={cat.id}
-              href={`/shop?category=${cat.slug}`}
+              href={`/${cat.slug}`}
               className="group relative block overflow-hidden rounded-sm bg-charcoal"
             >
               <div className="aspect-[4/5] sm:aspect-[3/4]">

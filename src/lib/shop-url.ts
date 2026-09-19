@@ -7,6 +7,10 @@ export type SortKey = "newest" | "price_asc" | "price_desc" | "bestselling";
 export type Availability = "all" | "in_stock" | "on_sale";
 
 export type ShopQuery = {
+  /** URL path this listing lives on — links are built against it. */
+  base: string;
+  /** Root category slug when the listing is scoped to a department (women/men/kids). */
+  department: string | null;
   categorySlug: string | null;
   sizes: string[];
   colors: string[];
@@ -18,6 +22,10 @@ export type ShopQuery = {
   page: number;
 };
 
+/** Top-level departments that get their own dedicated listing page. */
+export const DEPARTMENT_SLUGS = ["women", "men", "kids"] as const;
+export type DepartmentSlug = (typeof DEPARTMENT_SLUGS)[number];
+
 export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "newest", label: "Newest" },
   { value: "bestselling", label: "Best Selling" },
@@ -26,7 +34,10 @@ export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 ];
 
 /** Parse Next.js searchParams into a validated ShopQuery. */
-export function parseShopParams(sp: Record<string, string | string[] | undefined>): ShopQuery {
+export function parseShopParams(
+  sp: Record<string, string | string[] | undefined>,
+  opts: { base?: string; department?: string | null } = {}
+): ShopQuery {
   const one = (k: string): string | undefined => {
     const v = sp[k];
     return (Array.isArray(v) ? v[0] : v) || undefined;
@@ -53,6 +64,8 @@ export function parseShopParams(sp: Record<string, string | string[] | undefined
   if (min !== null && max !== null && min > max) [min, max] = [max, min];
 
   return {
+    base: opts.base ?? "/shop",
+    department: opts.department ?? null,
     categorySlug: one("category") || null,
     // normalize "OneSize" → "One Size" (DB label)
     sizes: many("size").map((s) => (s.toLowerCase() === "onesize" ? "One Size" : s)),
@@ -66,7 +79,7 @@ export function parseShopParams(sp: Record<string, string | string[] | undefined
   };
 }
 
-/** Build a /shop URL from a query object, applying updates. Filters reset to page 1. */
+/** Build a listing URL from a query object, applying updates. Filters reset to page 1. */
 export function shopHref(query: ShopQuery, updates: Partial<ShopQuery> = {}): string {
   const q: ShopQuery = { ...query, ...updates };
   if (!("page" in updates)) q.page = 1;
@@ -82,5 +95,5 @@ export function shopHref(query: ShopQuery, updates: Partial<ShopQuery> = {}): st
   if (q.sort !== "newest") sp.set("sort", q.sort);
   if (q.page > 1) sp.set("page", String(q.page));
   const qs = sp.toString();
-  return `/shop${qs ? `?${qs}` : ""}`;
+  return `${q.base || "/shop"}${qs ? `?${qs}` : ""}`;
 }

@@ -11,10 +11,10 @@ import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
+  { href: "/women", label: "Women" },
+  { href: "/men", label: "Men" },
+  { href: "/kids", label: "Kids" },
   { href: "/shop", label: "Shop All" },
-  { href: "/shop?category=men", label: "Men" },
-  { href: "/shop?category=women", label: "Women" },
-  { href: "/shop?category=kids", label: "Kids" },
   { href: "/shop?on_sale=1", label: "Sale" },
 ];
 
@@ -52,7 +52,6 @@ function IconButton({ href, label, children, showBadge }: { href: string; label:
 function NavLinks({ variant, onNavigate }: { variant: "desktop" | "mobile"; onNavigate?: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const category = searchParams.get("category");
   const sale = searchParams.get("on_sale") === "1";
 
   const isActive = (href: string) => {
@@ -60,11 +59,10 @@ function NavLinks({ variant, onNavigate }: { variant: "desktop" | "mobile"; onNa
     const [base, qs] = href.split("?");
     if (pathname !== base) return false;
     if (!qs) {
-      // "/shop" is active only when no special filter is chosen
-      return !category && !sale;
+      // plain listings (e.g. /women, /shop) stay active while sub-filters are applied
+      return !sale;
     }
     const params = new URLSearchParams(qs);
-    if (params.get("category")) return params.get("category") === category;
     if (params.get("on_sale")) return sale;
     return false;
   };

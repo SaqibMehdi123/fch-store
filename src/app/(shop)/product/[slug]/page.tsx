@@ -88,17 +88,22 @@ export default async function ProductPage({ params }: { params: Params }) {
         <Link href="/" className="transition-colors hover:text-gold">Home</Link>
         <span aria-hidden className="mx-2">/</span>
         <Link href="/shop" className="transition-colors hover:text-gold">Shop</Link>
-        {product.categoryPath
-          .slice()
-          .reverse()
-          .map((c) => (
+        {(() => {
+          // categoryPath is leaf → root; the root gets its own department page
+          const path = product.categoryPath.slice().reverse();
+          const rootSlug = path.length ? path[path.length - 1].slug : null;
+          return path.map((c, i) => (
             <span key={c.slug}>
               <span aria-hidden className="mx-2">/</span>
-              <Link href={`/shop?category=${c.slug}`} className="transition-colors hover:text-gold">
+              <Link
+                href={rootSlug && i === path.length - 1 ? `/${c.slug}` : `/${rootSlug}?category=${c.slug}`}
+                className="transition-colors hover:text-gold"
+              >
                 {c.name}
               </Link>
             </span>
-          ))}
+          ));
+        })()}
       </nav>
 
       {/* main */}

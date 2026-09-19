@@ -4,9 +4,10 @@ import { BrandLogo } from "@/components/brand/logo";
 import { getSettings } from "@/lib/settings";
 
 const SHOP_LINKS = [
-  { href: "/shop?category=men", label: "Men" },
-  { href: "/shop?category=women", label: "Women" },
-  { href: "/shop?category=kids", label: "Kids" },
+  { href: "/women", label: "Women" },
+  { href: "/men", label: "Men" },
+  { href: "/kids", label: "Kids" },
+  { href: "/shop", label: "Shop All" },
   { href: "/shop?on_sale=1", label: "Sale" },
 ];
 
