@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     "FCH",
     "Fashion and Collection House",
   ],
-  icons: { icon: "/logo.svg" },
+  icons: { icon: "/icon.svg" },
   openGraph: {
     title: "Fashion and Collection House",
     description: "Premium Pakistani clothing delivered nationwide.",

@@ -3,12 +3,12 @@
 /**
  * Storefront server actions — Phase 1:
  *  - submitReview: product review → moderation queue (pending)
- *  - submitContact: contact form → contact_messages (+ email_log stub)
+ *  - submitContact: contact form → contact_messages (+ branded store notification)
  * Both are rate-limited per IP.
  */
 import { db } from "@/lib/db";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { getSettings } from "@/lib/settings";
+import { sendContactNotification } from "@/lib/email/send";
 import { headers } from "next/headers";
 import { z } from "zod";
 
@@ -104,15 +104,13 @@ export async function submitContact(_prev: FormState, formData: FormData): Promi
     },
   });
 
-  // Email stub (Phase 5 wires the real sender) — queue a log entry so the
-  // admin can see contact activity from day one.
-  const settings = await getSettings();
-  await db.emailLog.create({
-    data: {
-      to: settings.email,
-      template: "contact_received_stub",
-      status: "queued",
-    },
+  // branded notification to the store (rendered, sent, logged in email_log)
+  await sendContactNotification({
+    name: parsed.data.name,
+    email: parsed.data.email,
+    phone: parsed.data.phone || null,
+    subject: parsed.data.subject || null,
+    message: parsed.data.message,
   });
 
   return {

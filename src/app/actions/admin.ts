@@ -6,6 +6,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { ORDER_TRANSITIONS } from "@/lib/admin/order-machine";
+import { flushOrderEmails, queueOrderEmail } from "@/lib/email/send";
+import type { TemplateName } from "@/lib/email/templates";
 
 /**
  * Phase 3 — admin mutations. Every action re-verifies the session server-side
@@ -24,19 +26,20 @@ export type ActionResult = { ok: true; message?: string } | { ok: false; message
 // Order state machine
 // ---------------------------------------------------------------
 
-const EMAIL_TEMPLATES: Record<string, string> = {
+const EMAIL_TEMPLATES: Record<string, TemplateName> = {
   confirmed: "order_confirmed",
   processing: "order_processing",
   shipped: "order_shipped",
   delivered: "order_delivered",
   cancelled: "order_cancelled",
+  payment_rejected: "payment_rejected",
 };
 
 /**
  * setOrderStatus — guarded transition + side effects:
  * - cancelling an unpaid/confirmed order restores reserved stock
  * - shipping accepts optional courier + tracking number
- * - email_log stubs are written (emails go live in Phase 5)
+ * - a branded status email is queued (idempotent) and delivered after commit
  */
 export async function setOrderStatus(input: {
   orderNo: string;
@@ -80,7 +83,7 @@ export async function setOrderStatus(input: {
 
     const template = EMAIL_TEMPLATES[input.next];
     if (template) {
-      await tx.emailLog.create({ data: { orderId: order.id, to: order.email, template, status: "queued" } });
+      await queueOrderEmail(tx, { orderId: order.id, to: order.email, template, dedupeKey: "" });
     }
   });
 
@@ -88,6 +91,7 @@ export async function setOrderStatus(input: {
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${input.orderNo}`);
   revalidatePath(`/order/${input.orderNo}`);
+  await flushOrderEmails(order.id);
   return { ok: true, message: `Order moved to ${input.next.replace(/_/g, " ")}.` };
 }
 
@@ -118,12 +122,15 @@ export async function verifyPayment(input: { paymentId: string; decision: "appro
       where: { id: payment.order.id },
       data: { status: approve ? "confirmed" : "payment_rejected" },
     }),
+    // rejections can repeat (reject → re-upload → reject again), so the dedupe
+    // key is the payment id; approvals are one-shot per order (key "")
     db.emailLog.create({
       data: {
         orderId: payment.order.id,
         to: payment.order.email,
         template: approve ? "order_confirmed" : "payment_rejected",
         status: "queued",
+        dedupeKey: approve ? "" : payment.id,
       },
     }),
   ]);
@@ -133,6 +140,7 @@ export async function verifyPayment(input: { paymentId: string; decision: "appro
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${payment.order.orderNo}`);
   revalidatePath(`/order/${payment.order.orderNo}`);
+  await flushOrderEmails(payment.order.id);
   return {
     ok: true,
     message: approve

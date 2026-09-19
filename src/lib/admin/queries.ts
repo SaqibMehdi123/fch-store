@@ -576,3 +576,83 @@ export async function listTeamMembers() {
   }));
   return mapped;
 }
+
+// ---------------------------------------------------------------
+// Phase 5 — email log
+// ---------------------------------------------------------------
+
+export type AdminEmailRow = {
+  id: string;
+  to: string;
+  template: string;
+  dedupeKey: string;
+  status: "queued" | "sent" | "failed";
+  subject: string | null;
+  html: string | null;
+  error: string | null;
+  createdAt: string;
+  orderId: string | null;
+  orderNo: string | null;
+  transport: string;
+};
+
+/**
+ * listAdminEmails — newest first, optional status/template/text filters.
+ * Joined with the order for the order-number link.
+ */
+export async function listAdminEmails(
+  opts: { status?: string; template?: string; q?: string; page?: number } = {}
+) {
+  const where = {
+    ...(opts.status && ["queued", "sent", "failed"].includes(opts.status)
+      ? { status: opts.status as "queued" | "sent" | "failed" }
+      : {}),
+    ...(opts.template ? { template: opts.template } : {}),
+    ...(opts.q
+      ? {
+          OR: [
+            { to: { contains: opts.q, mode: "insensitive" as const } },
+            { subject: { contains: opts.q, mode: "insensitive" as const } },
+            { order: { orderNo: { contains: opts.q, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
+
+  const page = Math.max(1, opts.page ?? 1);
+  const [rows, total] = await Promise.all([
+    db.emailLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: PAGE_SIZE,
+      skip: (page - 1) * PAGE_SIZE,
+      include: { order: { select: { orderNo: true } } },
+    }),
+    db.emailLog.count({ where }),
+  ]);
+
+  const transport = process.env.RESEND_API_KEY ? "Resend" : process.env.SMTP_HOST ? "SMTP" : "Preview (log only)";
+
+  const items: AdminEmailRow[] = rows.map((r) => ({
+    id: r.id,
+    to: r.to,
+    template: r.template,
+    dedupeKey: r.dedupeKey,
+    status: r.status,
+    subject: r.subject,
+    html: r.html,
+    error: r.error,
+    createdAt: r.createdAt.toISOString(),
+    orderId: r.orderId,
+    orderNo: r.order?.orderNo ?? null,
+    transport,
+  }));
+
+  return { items, total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
+}
+
+/** Distinct templates present in the log — for the filter dropdown. */
+export async function listEmailTemplates() {
+  const rows = await db.emailLog.findMany({ select: { template: true }, distinct: ["template"], orderBy: { template: "asc" } });
+  return rows.map((r) => r.template);
+}

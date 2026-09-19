@@ -351,12 +351,20 @@ model EmailLog {
   to        String
   template  String
   orderId   String?     @map("order_id")
+  /// Prevents duplicate sends for the same order transition (unique with
+  /// orderId + template). "" for one-shot transitions; payment id for
+  /// payment events that can legitimately repeat (upload → reject → upload).
+  dedupeKey String      @default("") @map("dedupe_key")
   status    EmailStatus @default(queued)
+  /// Rendered subject + HTML body (stored for the admin log preview).
+  subject   String?
+  html      String?     @db.Text
   error     String?     @db.Text
   createdAt DateTime    @default(now()) @map("created_at")
 
   order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
+  @@unique([orderId, template, dedupeKey], map: "email_log_order_template_dedupe_key")
   @@index([orderId])
   @@index([status])
   @@map("email_log")

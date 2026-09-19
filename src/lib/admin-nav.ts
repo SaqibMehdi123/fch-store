@@ -2,6 +2,7 @@ import {
   LayoutDashboard,
   BadgeCheck,
   Package,
+  Mail,
   Shirt,
   Boxes,
   Ticket,
@@ -32,6 +33,7 @@ export const ADMIN_NAV: { section: string; items: AdminNavItem[] }[] = [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard, phase: 3 },
       { href: "/admin/verification", label: "Payment Verification", icon: BadgeCheck, phase: 3 },
       { href: "/admin/orders", label: "Orders", icon: Package, phase: 3 },
+      { href: "/admin/emails", label: "Email Log", icon: Mail, phase: 5 },
     ],
   },
   {

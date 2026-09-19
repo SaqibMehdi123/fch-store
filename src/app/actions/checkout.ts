@@ -8,6 +8,7 @@ import { resolveCoupon } from "@/lib/coupons";
 import { effectivePrice, toNumber, phoneCore } from "@/lib/format";
 import { isAllowedImage, savePaymentScreenshot, MAX_SCREENSHOT_BYTES } from "@/lib/upload";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { flushOrderEmails, queueOrderEmail } from "@/lib/email/send";
 import { headers } from "next/headers";
 
 /**
@@ -122,7 +123,7 @@ export async function createOrder(raw: CheckoutInput): Promise<CheckoutResult> {
     // concurrent checkouts can race on the sequential order number — retry
     // with a bumped number when the unique constraint trips (stock guards
     // live inside the transaction, so a retry never double-reserves).
-    let result: { orderNo: string; total: number } | undefined;
+    let result: { orderNo: string; total: number; orderId: string } | undefined;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         result = await db.$transaction(async (tx) => {
@@ -223,17 +224,12 @@ export async function createOrder(raw: CheckoutInput): Promise<CheckoutResult> {
         await tx.coupon.update({ where: { id: couponId }, data: { usedCount: { increment: 1 } } });
       }
 
-      // 7) email stub (emails wired in Phase 5)
-      await tx.emailLog.create({
-        data: {
-          orderId: order.id,
-          to: input.email,
-          template: "order_placed",
-          status: "queued",
-        },
-      });
+      // 7) emails — queued inside the tx (unique index makes this idempotent);
+      //      delivered right after the transaction commits
+      await queueOrderEmail(tx, { orderId: order.id, to: input.email, template: "order_placed", dedupeKey: "place" });
+      await queueOrderEmail(tx, { orderId: order.id, to: settings.email || "orders@fch.pk", template: "admin_new_order", dedupeKey: "place" });
 
-      return { orderNo, total };
+      return { orderNo, total, orderId: order.id };
         });
         break;
       } catch (e) {
@@ -243,6 +239,9 @@ export async function createOrder(raw: CheckoutInput): Promise<CheckoutResult> {
     }
 
     revalidatePath("/admin");
+    // deliver the queued emails (order instructions to the customer + admin
+    // notification) — best-effort, never blocks or fails the checkout
+    await flushOrderEmails(result!.orderId);
     return { ok: true, orderNo: result!.orderNo, total: result!.total };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not place your order. Please try again.";
@@ -311,29 +310,42 @@ export async function submitPayment(
 
   try {
     const url = await savePaymentScreenshot(file, order.orderNo);
+    const payment = await db.payment.create({
+      data: {
+        orderId: order.id,
+        amount: order.total,
+        screenshotUrl: url,
+        transactionRef: parsed.data.transactionRef || null,
+        senderName: parsed.data.senderName,
+        status: "submitted",
+      },
+    });
     await db.$transaction([
-      db.payment.create({
-        data: {
-          orderId: order.id,
-          amount: order.total,
-          screenshotUrl: url,
-          transactionRef: parsed.data.transactionRef || null,
-          senderName: parsed.data.senderName,
-          status: "submitted",
-        },
-      }),
       db.order.update({ where: { id: order.id }, data: { status: "payment_submitted" } }),
+      // payment events can repeat (upload → reject → re-upload), so the dedupe
+      // key is the payment row id — a NEW upload always notifies again
       db.emailLog.create({
         data: {
           orderId: order.id,
           to: order.email,
           template: "payment_submitted",
           status: "queued",
+          dedupeKey: payment.id,
+        },
+      }),
+      db.emailLog.create({
+        data: {
+          orderId: order.id,
+          to: (await getSettings()).email || "orders@fch.pk",
+          template: "admin_payment_uploaded",
+          status: "queued",
+          dedupeKey: payment.id,
         },
       }),
     ]);
     revalidatePath(`/order/${order.orderNo}`);
     revalidatePath("/admin");
+    await flushOrderEmails(order.id);
     return { ok: true, status: "payment_submitted" };
   } catch {
     return { ok: false, message: "Upload failed. Please try again." };

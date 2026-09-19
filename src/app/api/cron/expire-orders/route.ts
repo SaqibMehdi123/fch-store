@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
+import { flushOrderEmails, queueOrderEmail } from "@/lib/email/send";
 
 /**
  * Hourly cron (Vercel cron → vercel.json) — expires unpaid orders:
  * 1. awaiting_payment with no screenshot after the upload deadline (24h default)
  * 2. payment_rejected with no re-upload after the deadline
- * Stock reserved by expired orders is restored, email_log rows are written
- * (emails themselves are stubbed until Phase 5).
+ * Stock reserved by expired orders is restored, branded expiry emails are
+ * queued and delivered (idempotent via the email_log unique index).
  *
  * Protected by CRON_SECRET (Authorization: Bearer or ?secret=).
  */
@@ -48,10 +49,9 @@ export async function GET(req: Request) {
             summary.stockRestored += updated.count * item.quantity;
           }
           await tx.order.update({ where: { id: order.id }, data: { status: "expired" } });
-          await tx.emailLog.create({
-            data: { to: order.email, orderId: order.id, template: "order_expired", status: "queued" },
-          });
+          await queueOrderEmail(tx, { orderId: order.id, to: order.email, template: "order_expired", dedupeKey: "" });
         });
+        await flushOrderEmails(order.id);
         summary.expired += 1;
       } catch (e) {
         summary.errors.push(`${order.orderNo}: ${e instanceof Error ? e.message : "failed"}`);
@@ -76,10 +76,9 @@ export async function GET(req: Request) {
             summary.stockRestored += updated.count * item.quantity;
           }
           await tx.order.update({ where: { id: order.id }, data: { status: "cancelled" } });
-          await tx.emailLog.create({
-            data: { to: order.email, orderId: order.id, template: "order_cancelled", status: "queued" },
-          });
+          await queueOrderEmail(tx, { orderId: order.id, to: order.email, template: "order_cancelled", dedupeKey: "" });
         });
+        await flushOrderEmails(order.id);
         summary.cancelled += 1;
       } catch (e) {
         summary.errors.push(`${order.orderNo}: ${e instanceof Error ? e.message : "failed"}`);

@@ -452,3 +452,26 @@ export async function resetTeamMemberPassword(input: { id: string; password: str
   await db.adminUser.update({ where: { id: input.id }, data: { passwordHash } });
   return { ok: true, message: `Password reset for ${member.name}.` };
 }
+
+// ---------------------------------------------------------------
+// Phase 5 — email log
+// ---------------------------------------------------------------
+
+/**
+ * retryEmail — put a failed/queued log row back through the mailer once.
+ * Safe by design: only rows not already "sent" are processed, and the
+ * (order, template, dedupe) unique index prevents duplicate queueing.
+ */
+export async function retryEmail(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  const row = await db.emailLog.findUnique({ where: { id }, select: { status: true } });
+  if (!row) return { ok: false, message: "Email log entry not found." };
+  if (row.status === "sent") return { ok: false, message: "This email was already delivered." };
+
+  const { sendQueuedEmail } = await import("@/lib/email/send");
+  const result = await sendQueuedEmail(id);
+  revalidatePath("/admin/emails");
+  return result.ok
+    ? { ok: true, message: "Email sent." }
+    : { ok: false, message: result.error ?? "Send failed — check the transport settings." };
+}

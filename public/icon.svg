@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#161616"/>
+  <text x="32" y="40" text-anchor="middle" font-family="Playfair Display, Georgia, 'Times New Roman', serif" font-size="34" fill="#F8F6F2">F</text>
+  <path d="M12,48 C22,52 34,46 50,49" fill="none" stroke="#B08D57" stroke-width="1.6" stroke-linecap="round"/>
+  <path fill="#B08D57" d="M46,13 L46.45,14.7 L48.15,15.55 L46.45,16.4 L46,18.1 L45.55,16.4 L43.85,15.55 L45.55,14.7 Z"/>
+</svg>
