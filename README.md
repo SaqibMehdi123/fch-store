@@ -48,4 +48,27 @@ bun run lint                  # code quality check
 
 ## Deployment
 
-Vercel + Neon + Cloudinary + Resend — full guide arrives in **Phase 6** (DEPLOYMENT.md).
+Production goes to **Vercel + Neon (PostgreSQL) + Cloudinary (media) + Resend
+(email)**. The full step-by-step guide — environment variables, custom domain,
+cron, go-live checklist and ops runbook — lives in **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+
+Quick health checks once live:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/health` | uptime probe (process + DB round-trip) |
+| `GET /sitemap.xml` | auto-generated from products/categories/pages |
+| `GET /robots.txt` | references the sitemap, keeps crawlers off admin/api |
+| `GET /api/cron/expire-orders` | hourly cron, `Authorization: Bearer $CRON_SECRET` |
+
+## Phase log
+
+| Phase | Scope |
+|---|---|
+| 0 | Foundation — Prisma schema (15 models), seed, admin skeleton |
+| 1 | Customer catalog — home, Women/Men/Kids departments with scoped filters, product pages, wishlist, CMS pages |
+| 2 | Cart, guest checkout, orders, bank-transfer payment upload |
+| 3 | Admin core — dashboard, orders & payment verification, products, inventory |
+| 4 | Content & marketing — banners, coupons, reviews, pages editor |
+| 5 | Transactional emails (Resend/SMTP + email log) and reports |
+| 6 | Launch readiness — DEPLOYMENT.md, security headers, health/sitemap/robots, branded 404/500 |

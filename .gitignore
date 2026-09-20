@@ -52,6 +52,7 @@ prompt
 
 server.log
 # Skills directory
+/skills/
 /skills/scripts/
 
 # Payment screenshots (sandbox fallback storage)

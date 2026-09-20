@@ -1,0 +1,6 @@
+﻿Order No,Date,Status,Customer,Phone,Email,Fulfilment,City,Address,Items,Subtotal (Rs.),Discount (Rs.),Shipping (Rs.),Total (Rs.),Coupon,Payment Status,Courier,Tracking No
+FCH-1004,19/09/2026,delivered,Ayesha Khan,0300 1234567,phase5@fchtest.pk,delivery,Lahore,"House 21, Street 4, DHA Phase 4",3,8997,400,0,8597,EID10,approved,TCS,TCS-4471902-33
+FCH-1003,19/09/2026,cancelled,Hina Khan,03331122334,hina.khan@test.pk,pickup,In-store pickup,In-store pickup,1,12999,500,0,12499,FESTIVE500,,,
+FCH-1001,19/09/2026,delivered,Saqib Mehdi,0300 1234567,saqibmehdi234@gmail.com,delivery,Karachi,"House 12, Street 5, DHA Phase 6",1,3499,350,120,3269,WELCOME10,approved,TCS,TCS-778812345
+FCH-1005,18/09/2026,expired,Bilal Ahmed,03211234567,cron@fchtest.pk,pickup,In-store pickup,In-store pickup,1,3499,0,0,3499,,,,
+FCH-1002,18/09/2026,expired,Ali Raza,03211234567,ali.raza@test.pk,pickup,In-store pickup,In-store pickup,1,3499,0,0,3499,,,,
