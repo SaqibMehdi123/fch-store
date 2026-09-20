@@ -12,8 +12,8 @@ type Params = Promise<{ orderNo: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export const metadata: Metadata = {
-  title: "Order Payment — Fashion and Collection House",
-  robots: { index: false },
+  title: { absolute: "Order Payment — Fashion and Collection House" },
+  robots: { index: false, follow: false },
 };
 
 /**

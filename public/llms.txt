@@ -1,0 +1,31 @@
+# Fashion and Collection House (FCH)
+
+> Premium Pakistani clothing brand delivering nationwide across Pakistan — kurtas, lawn suits, formals and luxury pret for women, men and kids, with bank-transfer/Raast payment, careful quality checks and customer care that answers within hours.
+
+Fashion and Collection House (short name FCH) is a Karachi-based luxury clothing store serving every city of Pakistan. The catalogue spans three departments: Women (pret, unstitched lawn, formals, luxury pret), Men (kurta shalwar, waistcoats, shirts, trousers) and Kids (embroidered sets, everyday essentials). Prices are in PKR, tax included. Orders are placed online, paid by bank transfer or Raast, confirmed after payment verification (usually within 24 hours), and delivered in 2–3 days to major cities.
+
+## Shop
+
+- [Shop All](http://localhost:3000/shop): the full FCH catalogue with filters for category, size, colour, price, availability and search
+- [Women](http://localhost:3000/women): the Women's Edit — pret, unstitched lawn, formals and luxury pret
+- [Men](http://localhost:3000/men): the Men's Edit — kurta shalwar, waistcoats, dress shirts, trousers and jeans
+- [Kids](http://localhost:3000/kids): the Kids' Edit — comfortable, breathable essentials for boys and girls
+- [Sitemap](http://localhost:3000/sitemap.xml): machine-readable index of every product and page
+
+## Customer information
+
+- [About](http://localhost:3000/about): who FCH is and the brand promise
+- [FAQ](http://localhost:3000/faq): ordering, payment, delivery, exchanges and verification answers
+- [Track Order](http://localhost:3000/track-order): follow an existing order by order number and phone
+- [Contact](http://localhost:3000/contact): phone, WhatsApp, email and the contact form
+
+## Policies
+
+- [Terms & Conditions](http://localhost:3000/terms): ordering, payment verification, delivery and exchange terms
+- [Privacy Policy](http://localhost:3000/privacy): what information FCH collects and how it is used
+
+## Contact
+
+- Email: orders@fch.pk
+- Hours: Monday–Saturday, 10am–8pm PKT
+- Servicing: all cities and provinces of Pakistan (headquarters: Karachi)

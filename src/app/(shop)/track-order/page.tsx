@@ -3,8 +3,9 @@ import { getSettings } from "@/lib/settings";
 import { TrackOrderView } from "@/components/store/track-order-view";
 
 export const metadata: Metadata = {
-  title: "Track Order — Fashion and Collection House",
+  title: { absolute: "Track Order — Fashion and Collection House" },
   description: "Follow your FCH order — status timeline, payment verification and delivery updates.",
+  robots: { index: false, follow: true },
 };
 
 export default async function TrackOrderPage({

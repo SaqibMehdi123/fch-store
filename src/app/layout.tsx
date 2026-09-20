@@ -32,11 +32,27 @@ export const metadata: Metadata = {
     "Fashion and Collection House",
   ],
   icons: { icon: "/icon.svg" },
+  manifest: "/manifest.webmanifest",
+  applicationName: "FCH",
+  authors: [{ name: "Fashion and Collection House" }],
   openGraph: {
     title: "Fashion and Collection House",
     description: "Premium Pakistani clothing delivered nationwide.",
     type: "website",
     siteName: "Fashion and Collection House",
+    locale: "en-PK",
+  },
+  twitter: { card: "summary_large_image" },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
 };
 

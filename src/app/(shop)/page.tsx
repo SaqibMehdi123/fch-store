@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Truck, RefreshCcw, ShieldCheck, Instagram, Facebook, Music2, ChevronRight } from "lucide-react";
 import { getHomeData } from "@/lib/products";
 import { getSettings } from "@/lib/settings";
@@ -7,10 +8,34 @@ import { ProductCard } from "@/components/store/product-card";
 import { ProductRail } from "@/components/store/product-rail";
 import { SectionHeading } from "@/components/store/section-heading";
 
-export const metadata = {
-  title: "Fashion and Collection House — Premium Pakistani Clothing, Nationwide",
+export const metadata: Metadata = {
+  title: { absolute: "Fashion and Collection House — Premium Pakistani Clothing, Nationwide" },
   description:
     "Kurtas, lawn suits, formals and luxury pret. Premium fabrics, careful finishing, honest pricing — delivered to every city in Pakistan.",
+  alternates: { canonical: "/" },
+  keywords: [
+    "pakistani clothing brand",
+    "premium pret Pakistan",
+    "lawn suits online",
+    "kurta shalwar",
+    "karachi clothing store",
+    "FCH",
+  ],
+  openGraph: {
+    title: "Fashion and Collection House — Premium Pakistani Clothing, Nationwide",
+    description:
+      "Kurtas, lawn suits, formals and luxury pret. Premium fabrics, careful finishing, honest pricing — delivered to every city in Pakistan.",
+    url: "/",
+    type: "website",
+    siteName: "Fashion and Collection House",
+    locale: "en-PK",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fashion and Collection House — Premium Pakistani Clothing",
+    description:
+      "Kurtas, lawn suits, formals and luxury pret — delivered to every city in Pakistan.",
+  },
 };
 
 export default async function HomePage() {

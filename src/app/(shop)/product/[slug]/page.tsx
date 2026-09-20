@@ -12,6 +12,7 @@ import { ReviewForm } from "@/components/store/review-form";
 import { ProductCard } from "@/components/store/product-card";
 import { SectionHeading } from "@/components/store/section-heading";
 import { cn } from "@/lib/utils";
+import { JsonLd, absUrl, breadcrumbLd } from "@/lib/seo";
 
 type Params = Promise<{ slug: string }>;
 
@@ -21,14 +22,23 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   if (!product) return { title: "Product not found — FCH" };
 
   const price = product.salePrice ?? product.price;
+  const ogTitle = `${product.name} — Fashion and Collection House`;
   return {
-    title: `${product.name} — Fashion and Collection House`,
+    title: { absolute: ogTitle },
     description: product.description.slice(0, 155),
     openGraph: {
-      title: product.name,
+      title: ogTitle,
       description: product.description.slice(0, 155),
       images: product.images.slice(0, 1),
       type: "website",
+      url: `/product/${product.slug}`,
+      siteName: "Fashion and Collection House",
+      locale: "en-PK",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description: product.description.slice(0, 155),
     },
     alternates: { canonical: `/product/${product.slug}` },
     other: { "product:price:amount": String(price), "product:price:currency": "PKR" },
@@ -54,34 +64,54 @@ export default async function ProductPage({ params }: { params: Params }) {
   const off = discountPercent(product.price, product.salePrice);
   const price = product.salePrice ?? product.price;
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    description: product.description,
-    image: product.images,
-    sku: product.variants[0]?.sku,
-    brand: { "@type": "Brand", name: "Fashion and Collection House" },
-    offers: {
-      "@type": "Offer",
-      url: `/product/${product.slug}`,
-      priceCurrency: "PKR",
-      price,
-      availability: product.totalStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      itemCondition: "https://schema.org/NewCondition",
-    },
-    ...(product.ratingCount > 0 && {
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: product.ratingAvg,
-        reviewCount: product.ratingCount,
+  // leaf → root; the root category gets its own department page (mirrors the breadcrumb nav below)
+  const path = product.categoryPath.slice().reverse();
+  const rootSlug = path.length ? path[path.length - 1].slug : null;
+  const crumbs = [
+    { name: "Home", path: "/" },
+    { name: "Shop", path: "/shop" },
+    ...path.map((c, i) => ({
+      name: c.name,
+      path: rootSlug && i === path.length - 1 ? `/${c.slug}` : `/${rootSlug}?category=${c.slug}`,
+    })),
+    { name: product.name, path: `/product/${product.slug}` },
+  ];
+
+  const jsonLd = [
+    breadcrumbLd(crumbs),
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      description: product.description,
+      image: product.images.map((img) => absUrl(img)),
+      sku: product.variants[0]?.sku,
+      brand: {
+        "@type": "Brand",
+        name: "Fashion and Collection House",
+        url: absUrl("/"),
       },
-    }),
-  };
+      offers: {
+        "@type": "Offer",
+        url: absUrl(`/product/${product.slug}`),
+        priceCurrency: "PKR",
+        price,
+        availability: product.totalStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        itemCondition: "https://schema.org/NewCondition",
+      },
+      ...(product.ratingCount > 0 && {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: product.ratingAvg,
+          reviewCount: product.ratingCount,
+        },
+      }),
+    },
+  ];
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8 lg:py-12">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
 
       {/* breadcrumb */}
       <nav aria-label="Breadcrumb" className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -89,9 +119,6 @@ export default async function ProductPage({ params }: { params: Params }) {
         <span aria-hidden className="mx-2">/</span>
         <Link href="/shop" className="transition-colors hover:text-gold">Shop</Link>
         {(() => {
-          // categoryPath is leaf → root; the root gets its own department page
-          const path = product.categoryPath.slice().reverse();
-          const rootSlug = path.length ? path[path.length - 1].slug : null;
           return path.map((c, i) => (
             <span key={c.slug}>
               <span aria-hidden className="mx-2">/</span>

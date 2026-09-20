@@ -5,8 +5,8 @@ import { toNumber } from "@/lib/format";
 import { CheckoutForm } from "@/components/store/checkout-form";
 
 export const metadata: Metadata = {
-  title: "Checkout — Fashion and Collection House",
-  robots: { index: false },
+  title: { absolute: "Checkout — Fashion and Collection House" },
+  robots: { index: false, follow: false },
 };
 
 export default async function CheckoutPage() {

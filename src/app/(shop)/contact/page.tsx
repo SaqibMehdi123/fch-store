@@ -2,11 +2,22 @@ import type { Metadata } from "next";
 import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
 import { getSettings } from "@/lib/settings";
 import { ContactForm } from "@/components/store/contact-form";
+import { JsonLd, clothingStoreLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Contact Us — Fashion and Collection House",
+  title: { absolute: "Contact Us — Fashion and Collection House" },
   description:
     "Questions about an order, sizing or exchange? Reach the FCH team by phone, WhatsApp or email — we usually reply within hours.",
+  alternates: { canonical: "/contact" },
+  openGraph: {
+    title: "Contact Us — Fashion and Collection House",
+    description:
+      "Questions about an order, sizing or exchange? Reach the FCH team by phone, WhatsApp or email — we usually reply within hours.",
+    url: "/contact",
+    type: "website",
+    siteName: "Fashion and Collection House",
+    locale: "en-PK",
+  },
 };
 
 export default async function ContactPage() {
@@ -27,6 +38,8 @@ export default async function ContactPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 lg:py-14">
+      <JsonLd data={clothingStoreLd(settings)} />
+
       <header className="border-b border-stone pb-6">
         <p className="label-caps text-gold">We're here to help</p>
         <h1 className="mt-2 font-display text-3xl sm:text-4xl">Contact Us</h1>

@@ -10,6 +10,7 @@ import {
   shopHref,
 } from "@/lib/products";
 import { ProductCard } from "@/components/store/product-card";
+import { JsonLd, breadcrumbLd, itemListLd } from "@/lib/seo";
 import {
   ActiveFilters,
   FilterSidebar,
@@ -75,8 +76,24 @@ export async function ListingPage({
 
   const activeTop = branch?.category ?? null;
 
+  const crumbs = [
+    { name: "Home", path: "/" },
+    { name: deptName ?? "Shop", path: query.base },
+    ...(activeTop && dept && activeTop.slug !== dept.root.slug
+      ? [{ name: activeTop.name, path: `/${dept.root.slug}?category=${activeTop.slug}` }]
+      : []),
+  ];
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-8 lg:py-12">
+      <JsonLd
+        data={[
+          breadcrumbLd(crumbs),
+          // Current result set (respects filters/sort/search) as an ItemList.
+          itemListLd(result.items, `${title} — Fashion and Collection House`),
+        ]}
+      />
+
       {/* header band */}
       <header className="border-b border-stone pb-6">
         <nav aria-label="Breadcrumb" className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
