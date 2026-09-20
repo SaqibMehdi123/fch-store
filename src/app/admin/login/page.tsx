@@ -17,9 +17,8 @@ export default async function AdminLoginPage() {
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm animate-fade-up">
         <div className="flex flex-col items-center mb-8">
-          <BrandLogo size={64} href="/admin" />
-          <h1 className="font-display text-2xl mt-4">Admin Panel</h1>
-          <p className="label-caps text-muted-foreground mt-2">Fashion &amp; Collection House</p>
+          <BrandLogo size={56} href="/admin" />
+          <h1 className="label-caps text-muted-foreground mt-3">Admin</h1>
         </div>
         <div className="border border-stone bg-card p-8 rounded-sm shadow-[0_1px_2px_rgba(26,26,26,0.04)]">
           <LoginForm />

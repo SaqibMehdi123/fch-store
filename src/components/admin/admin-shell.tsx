@@ -84,12 +84,10 @@ export function AdminShell({
     <div className="flex min-h-screen bg-background">
       {/* desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-stone bg-card lg:flex">
-        <div className="flex h-16 items-center gap-3 border-b border-stone px-5">
-          <BrandLogo light size={34} href="/admin" />
-          <div>
-            <p className="font-display text-base leading-none">Admin Panel</p>
-            <p className="mt-0.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Fashion &amp; Collection House</p>
-          </div>
+        <div className="flex h-14 items-center gap-2.5 border-b border-stone px-5">
+          <BrandLogo size={30} href="/admin" />
+          <span aria-hidden className="h-4 w-px bg-stone" />
+          <p className="label-caps text-[10px] text-muted-foreground">Admin</p>
         </div>
         <SidebarNav />
         <UserBlock user={user} />
@@ -107,10 +105,11 @@ export function AdminShell({
                 </button>
               </SheetTrigger>
               <SheetContent side="left" className="w-64 p-0 flex flex-col">
-                <div className="flex h-14 items-center gap-3 border-b border-stone px-5">
+                <div className="flex h-14 items-center gap-2.5 border-b border-stone px-5">
                   <SheetTitle className="sr-only">Admin navigation</SheetTitle>
-                  <BrandLogo light size={30} href="/admin" />
-                  <p className="font-display">Admin Panel</p>
+                  <BrandLogo size={30} href="/admin" />
+                  <span aria-hidden className="h-4 w-px bg-stone" />
+                  <p className="label-caps text-[10px] text-muted-foreground">Admin</p>
                 </div>
                 <SidebarNav onNavigate={() => setOpen(false)} />
                 <UserBlock user={user} />
