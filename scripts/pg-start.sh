@@ -1,10 +1,34 @@
 #!/usr/bin/env bash
-# Start the sandbox-local PostgreSQL 17 (Zonky portable binaries under .pglocal/, no root).
+# Start the sandbox-local PostgreSQL 17 (portable binaries under .pglocal/, no root).
+# Auto-detects layout: Zonky (.pglocal/pg) or apt-deb extracted (.pglocal/pgroot/usr).
 # Usage: bash scripts/pg-start.sh
 set -e
 BASE="/home/z/my-project"
-PGBIN="$BASE/.pglocal/pg/bin"
-export LD_LIBRARY_PATH="$BASE/.pglocal/pg/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+# --- locate binaries + libs (whichever layout exists) ---
+PGBIN=""
+if [ -x "$BASE/.pglocal/pg/bin/pg_ctl" ]; then
+  PGBIN="$BASE/.pglocal/pg/bin"
+  LIBDIRS="$BASE/.pglocal/pg/lib"
+else
+  # apt layout: pgroot/usr/lib/postgresql/<major>/bin
+  for d in "$BASE"/.pglocal/pgroot/usr/lib/postgresql/*/bin; do
+    if [ -x "$d/pg_ctl" ]; then PGBIN="$d"; break; fi
+  done
+  if [ -n "$PGBIN" ]; then
+    BINVERDIR="$(dirname "$PGBIN")"                        # .../pgroot/usr/lib/postgresql/<ver>
+    USRLIB="$(dirname "$(dirname "$BINVERDIR")")"          # .../pgroot/usr/lib
+    USR="$(dirname "$USRLIB")"                             # .../pgroot/usr
+    LIBDIRS="$USRLIB/postgresql/$(basename "$BINVERDIR")/lib $USRLIB/x86_64-linux-gnu $USRLIB"
+  fi
+fi
+if [ -z "$PGBIN" ]; then
+  echo "No PostgreSQL binaries found under $BASE/.pglocal (expected Zonky or apt layout)." >&2
+  exit 1
+fi
+for LIB in $LIBDIRS; do
+  export LD_LIBRARY_PATH="$LIB${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+done
 export PATH="$PGBIN:$PATH"
 DATA="$BASE/.pglocal/data"
 

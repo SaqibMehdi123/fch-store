@@ -4,6 +4,8 @@ import { getSettings } from "@/lib/settings";
 import { toNumber } from "@/lib/format";
 import { CheckoutForm } from "@/components/store/checkout-form";
 
+export const dynamic = "force-dynamic"; // DB-backed (zones + settings) — never prerender at build time
+
 export const metadata: Metadata = {
   title: { absolute: "Checkout — Fashion and Collection House" },
   robots: { index: false, follow: false },

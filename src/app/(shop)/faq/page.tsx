@@ -3,6 +3,8 @@ import { CmsPage } from "@/components/store/cms-page";
 import { db } from "@/lib/db";
 import { JsonLd, parseFaqMarkdown } from "@/lib/seo";
 
+export const revalidate = 300; // ISR — DB-backed CMS page, refreshed every 5 minutes
+
 export const metadata: Metadata = {
   title: "FAQ — Fashion and Collection House",
   description:

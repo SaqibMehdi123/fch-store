@@ -8,6 +8,8 @@ import { ProductCard } from "@/components/store/product-card";
 import { ProductRail } from "@/components/store/product-rail";
 import { SectionHeading } from "@/components/store/section-heading";
 
+export const revalidate = 300; // ISR — refresh home content from DB every 5 minutes
+
 export const metadata: Metadata = {
   title: { absolute: "Fashion and Collection House — Premium Pakistani Clothing, Nationwide" },
   description:
