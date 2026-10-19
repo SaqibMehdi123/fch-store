@@ -180,7 +180,7 @@ export function ZoneManager({ rows }: { rows: AdminZoneRow[] }) {
       </p>
 
       <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display">{form.id ? `Edit ${form.name}` : "New delivery zone"}</DialogTitle>
             <DialogDescription>Zones appear as delivery options at checkout with their rate and ETA.</DialogDescription>
@@ -208,7 +208,7 @@ export function ZoneManager({ rows }: { rows: AdminZoneRow[] }) {
                 className={field}
               />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <label className={label} htmlFor="zone-rate">Rate (Rs.)</label>
                 <input

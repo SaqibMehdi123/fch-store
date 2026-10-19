@@ -145,7 +145,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormState }) {
         </Section>
 
         <Section title="Contact" hint="Used in the footer, contact page and WhatsApp button.">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={label} htmlFor="s-phone">Phone</label>
               <input id="s-phone" value={form.phone} onChange={(e) => set("phone", e.target.value)} className={field} placeholder="+92 300 0000000" />
@@ -181,7 +181,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormState }) {
         </Section>
 
         <Section title="Order deadlines" hint="Applies to bank-transfer orders; unpaid orders expire automatically via the daily cron.">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={label} htmlFor="s-upload">Upload deadline (hours)</label>
               <input

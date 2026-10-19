@@ -223,14 +223,14 @@ export function CouponManager({ rows }: { rows: AdminCouponRow[] }) {
       </p>
 
       <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display">{form.id ? `Edit ${form.code}` : "New coupon"}</DialogTitle>
             <DialogDescription>Discounts apply to the merchandise subtotal — shipping is excluded.</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-1">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={label} htmlFor="coupon-code">Code</label>
                 <input
@@ -255,7 +255,7 @@ export function CouponManager({ rows }: { rows: AdminCouponRow[] }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={label} htmlFor="coupon-value">
                   {form.type === "percent" ? "Percent (%)" : "Amount (Rs.)"}
@@ -298,7 +298,7 @@ export function CouponManager({ rows }: { rows: AdminCouponRow[] }) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={label} htmlFor="coupon-start">Starts</label>
                 <input
@@ -321,7 +321,7 @@ export function CouponManager({ rows }: { rows: AdminCouponRow[] }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 items-end gap-3">
+            <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2">
               <div>
                 <label className={label} htmlFor="coupon-limit">Usage limit</label>
                 <input

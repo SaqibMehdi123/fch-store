@@ -188,7 +188,7 @@ export function BannerManager({ rows }: { rows: AdminBannerRow[] }) {
       )}
 
       <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display">{form.id ? "Edit banner" : "New banner"}</DialogTitle>
             <DialogDescription>Shown on the homepage carousel — lower sort numbers appear first.</DialogDescription>
@@ -204,7 +204,7 @@ export function BannerManager({ rows }: { rows: AdminBannerRow[] }) {
                 label="Banner image"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={label} htmlFor="banner-title">Title</label>
                 <input
@@ -224,7 +224,7 @@ export function BannerManager({ rows }: { rows: AdminBannerRow[] }) {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <label className={label} htmlFor="banner-link">Link URL</label>
                 <input
@@ -251,7 +251,7 @@ export function BannerManager({ rows }: { rows: AdminBannerRow[] }) {
                 <Switch checked={form.isActive} onCheckedChange={(v) => setForm({ ...form, isActive: v })} aria-label="Banner active" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={label} htmlFor="banner-start">Schedule start (optional)</label>
                 <input

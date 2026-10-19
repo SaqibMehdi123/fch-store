@@ -137,6 +137,10 @@ export function SiteHeader() {
             <Suspense fallback={<div className="p-5 text-sm text-muted-foreground">Loading menu…</div>}>
               <NavLinks variant="mobile" onNavigate={() => setOpen(false)} />
             </Suspense>
+            <div className="px-5 pt-5 pb-6">
+              <p className="label-caps mb-2.5 text-muted-foreground">Search</p>
+              <SearchForm onSubmitted={() => setOpen(false)} />
+            </div>
           </SheetContent>
         </Sheet>
         <BrandLogo size={32} className="absolute left-1/2 -translate-x-1/2" />

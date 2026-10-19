@@ -172,7 +172,7 @@ export function PopupAdManager({ rows }: { rows: AdminPopupAdRow[] }) {
       )}
 
       <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display">{form.id ? "Edit popup" : "New popup"}</DialogTitle>
             <DialogDescription>
@@ -191,7 +191,7 @@ export function PopupAdManager({ rows }: { rows: AdminPopupAdRow[] }) {
                 label="Popup image"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={label} htmlFor="popup-headline">Headline</label>
                 <input
@@ -213,7 +213,7 @@ export function PopupAdManager({ rows }: { rows: AdminPopupAdRow[] }) {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={label} htmlFor="popup-link">Link URL (optional)</label>
                 <input

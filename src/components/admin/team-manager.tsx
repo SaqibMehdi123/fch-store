@@ -157,7 +157,7 @@ export function TeamManager({
 
       {/* add member */}
       <Dialog open={adding} onOpenChange={setAdding}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display">Add team member</DialogTitle>
             <DialogDescription>They can sign in at /admin immediately after saving.</DialogDescription>
@@ -171,7 +171,7 @@ export function TeamManager({
               <label className={label} htmlFor="tm-email">Email</label>
               <input id="tm-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={field} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={label} htmlFor="tm-pass">Temporary password</label>
                 <input id="tm-pass" type="text" value={password} onChange={(e) => setPassword(e.target.value)} className={`${field} font-mono`} placeholder="8+ chars, letters + numbers" />
@@ -199,7 +199,7 @@ export function TeamManager({
 
       {/* reset password */}
       <Dialog open={resetting !== null} onOpenChange={(o) => !o && setResetting(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display">Reset password</DialogTitle>
             <DialogDescription>

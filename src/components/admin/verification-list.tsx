@@ -34,7 +34,7 @@ function ScreenshotViewer({ url, alt }: { url: string; alt: string }) {
           <Eye className="h-3.5 w-3.5" /> View screenshot
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display">{alt}</DialogTitle>
         </DialogHeader>

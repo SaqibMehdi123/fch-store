@@ -43,7 +43,7 @@ function EmailPreview({ row }: { row: AdminEmailRow }) {
           <Eye className="h-3.5 w-3.5" /> Preview
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-display">{row.subject ?? templateLabel(row.template)}</DialogTitle>
           <DialogDescription>

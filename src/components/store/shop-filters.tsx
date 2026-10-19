@@ -500,7 +500,7 @@ export function ShopPagination({ query, result }: { query: ShopQuery; result: Pi
   const pages = Array.from({ length: pageCount }, (_, i) => i + 1);
 
   return (
-    <nav aria-label="Pagination" className="mt-12 flex items-center justify-center gap-1.5">
+    <nav aria-label="Pagination" className="mt-12 flex flex-wrap items-center justify-center gap-1.5">
       {page > 1 && (
         <Link
           href={shopHref(query, { page: page - 1 })}
