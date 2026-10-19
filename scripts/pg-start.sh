@@ -3,13 +3,8 @@
 # Usage: bash scripts/pg-start.sh
 set -e
 BASE="/home/z/my-project"
-# Zonky portable layout (.pglocal/pg/bin) or apt-installed layout (.pglocal/pgroot/usr/lib/postgresql/17/bin)
-for CAND in "$BASE/.pglocal/pg/bin" "$BASE/.pglocal/pgroot/usr/lib/postgresql/17/bin" "/usr/lib/postgresql/17/bin"; do
-  if [ -x "$CAND/pg_ctl" ]; then PGBIN="$CAND"; break; fi
-done
-[ -n "${PGBIN:-}" ] || { echo "no pg_ctl found" >&2; exit 1; }
-PGROOT="$(dirname "$(dirname "$PGBIN")")"
-export LD_LIBRARY_PATH="$PGROOT/lib:${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+PGBIN="$BASE/.pglocal/pg/bin"
+export LD_LIBRARY_PATH="$BASE/.pglocal/pg/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export PATH="$PGBIN:$PATH"
 DATA="$BASE/.pglocal/data"
 
