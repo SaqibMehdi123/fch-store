@@ -1,12 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Truck, RefreshCcw, ShieldCheck, Instagram, Facebook, Music2, ChevronRight } from "lucide-react";
-import { getHomeData } from "@/lib/products";
+import { getHomeData, getActivePopupAd } from "@/lib/products";
 import { getSettings } from "@/lib/settings";
 import { BannerCarousel } from "@/components/store/banner-carousel";
 import { ProductCard } from "@/components/store/product-card";
 import { ProductRail } from "@/components/store/product-rail";
 import { SectionHeading } from "@/components/store/section-heading";
+import { HomePopupAd } from "@/components/store/home-popup-ad";
 
 export const revalidate = 300; // ISR — refresh home content from DB every 5 minutes
 
@@ -41,11 +42,13 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [data, settings] = await Promise.all([getHomeData(), getSettings()]);
+  const [data, settings, popup] = await Promise.all([getHomeData(), getSettings(), getActivePopupAd()]);
   const hasSocials = settings.instagramUrl || settings.facebookUrl || settings.tiktokUrl;
 
   return (
     <div className="animate-fade-in">
+      {popup && <HomePopupAd popup={popup} />}
+
       {/* ── hero — banner carousel from the banners table ── */}
       <BannerCarousel slides={data.banners} />
 
@@ -189,9 +192,6 @@ export default async function HomePage() {
         <section className="mx-auto max-w-7xl px-6 py-14 text-center">
           <p className="label-caps text-gold">Follow the house</p>
           <h2 className="mt-2 font-display text-2xl sm:text-3xl">@fch.pk</h2>
-          <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
-            New drops, styling notes and behind-the-scenes from the studio.
-          </p>
           <div className="mt-6 flex items-center justify-center gap-4">
             {settings.instagramUrl && (
               <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram"

@@ -44,35 +44,36 @@
 }
 
 :root {
-  /* FCH luxury palette */
-  --ivory: #f8f6f2; /* page background */
-  --charcoal: #1a1a1a; /* primary text */
-  --gold: #b08d57; /* accent */
-  --gold-soft: #c9b896; /* accent, lighter */
+  /* FCH luxury palette — Wine & Porcelain */
+  --ivory: #faf7f2; /* warm porcelain page background */
+  --charcoal: #2b1f19; /* warm espresso ink */
+  --gold: #b08155; /* antique brass accent */
+  --gold-soft: #d9c2a5; /* accent, lighter */
   --gold-foreground: #ffffff;
-  --stone: #e7e2da; /* borders */
-  --footer: #161616; /* dark charcoal footer */
-  --footer-foreground: #d6d0c4;
+  --stone: #ecdfd2; /* warm borders */
+  --footer: #241619; /* deep wine-espresso footer */
+  --footer-foreground: #dccfc2;
+  --primary: #722032; /* deep wine — signature CTAs */
+  --primary-deep: #5a1626; /* wine, pressed/hover */
 
   --radius: 0.25rem; /* tailored, sharp luxury corners */
-  --background: #f8f6f2;
-  --foreground: #1a1a1a;
-  --card: #ffffff;
-  --card-foreground: #1a1a1a;
-  --popover: #ffffff;
-  --popover-foreground: #1a1a1a;
-  --primary: #1a1a1a; /* black fill buttons */
-  --primary-foreground: #f8f6f2;
-  --secondary: #efebe3;
-  --secondary-foreground: #1a1a1a;
-  --muted: #efebe3;
-  --muted-foreground: #6f695e;
-  --accent: #b08d57; /* gold accent */
-  --accent-foreground: #ffffff;
+  --background: #faf7f2;
+  --foreground: #2b1f19;
+  --card: #fffdfb;
+  --card-foreground: #2b1f19;
+  --popover: #fffdfb;
+  --popover-foreground: #2b1f19;
+  --primary-foreground: #faf7f2;
+  --secondary: #f3ebe0;
+  --secondary-foreground: #2b1f19;
+  --muted: #f3ebe0;
+  --muted-foreground: #86756a;
+  --accent: #f3ebe0; /* soft warm hover wash */
+  --accent-foreground: #2b1f19;
   --destructive: #a03028;
-  --border: #e7e2da;
-  --input: #e7e2da;
-  --ring: #b08d57;
+  --border: #ecdfd2;
+  --input: #ecdfd2;
+  --ring: #722032;
 }
 
 @layer base {
@@ -87,7 +88,7 @@
     font-feature-settings: "liga" 1, "kern" 1;
   }
   ::selection {
-    background: var(--gold);
+    background: var(--primary);
     color: #fff;
   }
 }
@@ -108,13 +109,13 @@
     font-family: var(--font-display);
   }
 
-  /* primary button: black fill, gold hover */
+  /* primary button: wine fill, deepens on hover */
   .btn-luxury {
     @apply inline-flex items-center justify-center gap-2 bg-primary px-8 py-3 text-[12px] font-medium uppercase tracking-[0.18em] text-primary-foreground transition-colors duration-300 rounded-sm;
   }
   .btn-luxury:hover:not(:disabled) {
-    background-color: var(--gold);
-    color: var(--gold-foreground);
+    background-color: var(--primary-deep);
+    color: var(--primary-foreground);
   }
   .btn-luxury:disabled {
     @apply opacity-50 cursor-not-allowed;
@@ -172,9 +173,35 @@
   background: var(--ivory);
 }
 ::-webkit-scrollbar-thumb {
-  background: #d8d2c6;
+  background: #ddd0bf;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--gold-soft);
+}
+
+/* ── homepage popup ad ─────────────────────────────────────── */
+@keyframes fch-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes fch-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.popup-backdrop {
+  animation: fch-backdrop-in 0.4s ease both;
+}
+.popup-card {
+  animation: fch-pop-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

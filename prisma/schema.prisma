@@ -298,6 +298,22 @@ model Banner {
   @@map("banners")
 }
 
+/// Homepage welcome popup — the newest active row is shown once per visitor
+/// on first load. Owner manages it in Admin → Homepage Popup.
+model PopupAd {
+  id        String    @id @default(cuid())
+  imageUrl  String    @map("image_url")
+  headline  String?
+  subline   String?
+  linkUrl   String?   @map("link_url")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@index([isActive, createdAt])
+  @@map("popup_ads")
+}
+
 model Page {
   id        String   @id @default(cuid())
   slug      String   @unique // 'about' | 'faq' | 'terms' | 'privacy'

@@ -281,7 +281,7 @@ export function CheckoutForm({
             {pending ? "Placing order…" : `Place Order — ${formatPKR(total)}`}
           </button>
           <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
-            You&apos;ll transfer the amount to our bank account (or Raast) and upload the screenshot next.
+            Next: transfer the amount, then upload your screenshot.
           </p>
         </aside>
       </form>

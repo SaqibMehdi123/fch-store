@@ -64,9 +64,9 @@ export type OrderEmailContext = {
 // helpers
 // -----------------------------------------------------------------
 
-const GOLD = "#B08D57";
-const CHARCOAL = "#1A1A1A";
-const IVORY = "#F8F6F2";
+const GOLD = "#B08155";
+const CHARCOAL = "#2B1F19";
+const IVORY = "#FAF7F2";
 const STONE = "#E7E2DA";
 const MUTED = "#6E6A61";
 

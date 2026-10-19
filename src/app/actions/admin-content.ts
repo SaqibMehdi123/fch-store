@@ -224,6 +224,62 @@ export async function deleteBanner(id: string): Promise<ActionResult> {
 }
 
 // ---------------------------------------------------------------
+// Homepage popup ads
+// ---------------------------------------------------------------
+
+const popupAdSchema = z.object({
+  id: z.string().optional(),
+  imageUrl: z.string().trim().min(1, "Add an image.").max(500),
+  headline: z.string().trim().max(80).nullable().optional(),
+  subline: z.string().trim().max(140).nullable().optional(),
+  linkUrl: z.string().trim().max(300).nullable().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type PopupAdInput = z.infer<typeof popupAdSchema>;
+
+export async function upsertPopupAd(raw: PopupAdInput): Promise<ActionResult> {
+  await requireAdmin();
+  const parsed = popupAdSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
+  const data = parsed.data;
+
+  const payload = {
+    imageUrl: data.imageUrl,
+    headline: data.headline || null,
+    subline: data.subline || null,
+    linkUrl: data.linkUrl || null,
+    isActive: data.isActive ?? true,
+  };
+
+  try {
+    await db.popupAd.upsert({ where: { id: data.id ?? "" }, update: payload, create: payload });
+  } catch {
+    return { ok: false, message: "Could not save the popup — please retry." };
+  }
+
+  revalidatePath("/admin/popup-ads");
+  revalidateStorefront();
+  return { ok: true, message: "Popup saved." };
+}
+
+export async function setPopupAdActive(id: string, isActive: boolean): Promise<ActionResult> {
+  await requireAdmin();
+  await db.popupAd.update({ where: { id }, data: { isActive } });
+  revalidatePath("/admin/popup-ads");
+  revalidateStorefront();
+  return { ok: true, message: isActive ? "Popup published — visitors will see it on their next first load." : "Popup hidden." };
+}
+
+export async function deletePopupAd(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  await db.popupAd.delete({ where: { id } });
+  revalidatePath("/admin/popup-ads");
+  revalidateStorefront();
+  return { ok: true, message: "Popup deleted." };
+}
+
+// ---------------------------------------------------------------
 // Delivery zones
 // ---------------------------------------------------------------
 

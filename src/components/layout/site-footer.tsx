@@ -37,7 +37,7 @@ export async function SiteFooter() {
         <div>
           <BrandLogo light size={46} />
           <p className="mt-4 text-sm leading-6 text-footer-foreground/80 max-w-xs">
-            Premium Pakistani clothing, delivered nationwide. Thoughtfully made, carefully packed, honestly priced.
+            Premium Pakistani clothing, delivered nationwide.
           </p>
           {hasSocials && (
             <div className="mt-5 flex items-center gap-4">
@@ -131,7 +131,7 @@ export async function SiteFooter() {
             © {new Date().getFullYear()} Fashion and Collection House. All rights reserved.
           </p>
           <p className="text-[11px] uppercase tracking-[0.18em] text-footer-foreground/50">
-            Secure Bank Transfer · Raast · Nationwide Delivery
+            Nationwide Delivery · Secure Bank Transfer
           </p>
         </div>
       </div>

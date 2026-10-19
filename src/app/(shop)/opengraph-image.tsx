@@ -20,8 +20,8 @@ export default function OpengraphImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#0c0b09",
-          color: "#f8f6f2",
+          backgroundColor: "#1c1013",
+          color: "#FAF7F2",
         }}
       >
         {/* hairline gold frame */}
@@ -32,7 +32,7 @@ export default function OpengraphImage() {
             left: 28,
             right: 28,
             bottom: 28,
-            border: "1px solid #b98a2f",
+            border: "1px solid #b08155",
             display: "flex",
           }}
         />
@@ -41,7 +41,7 @@ export default function OpengraphImage() {
             display: "flex",
             fontSize: 30,
             letterSpacing: 14,
-            color: "#d4af5a",
+            color: "#d9c2a5",
             textTransform: "uppercase",
             marginBottom: 28,
           }}
@@ -64,11 +64,11 @@ export default function OpengraphImage() {
             display: "flex",
             width: 120,
             height: 2,
-            backgroundColor: "#b98a2f",
+            backgroundColor: "#b08155",
             margin: "34px 0",
           }}
         />
-        <div style={{ display: "flex", fontSize: 32, letterSpacing: 3, color: "#cfc8bb" }}>
+        <div style={{ display: "flex", fontSize: 32, letterSpacing: 3, color: "#c9bcae" }}>
           Premium Pakistani Clothing — Nationwide Delivery
         </div>
       </div>

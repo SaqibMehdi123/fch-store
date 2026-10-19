@@ -9,6 +9,7 @@ import {
   Star,
   MapPin,
   Image as ImageIcon,
+  Megaphone,
   FileText,
   Settings,
   Users,
@@ -49,6 +50,7 @@ export const ADMIN_NAV: { section: string; items: AdminNavItem[] }[] = [
       { href: "/admin/coupons", label: "Coupons", icon: Ticket, phase: 4 },
       { href: "/admin/reviews", label: "Reviews", icon: Star, phase: 4 },
       { href: "/admin/banners", label: "Banners", icon: ImageIcon, phase: 4 },
+      { href: "/admin/popup-ads", label: "Homepage Popup", icon: Megaphone, phase: 4 },
     ],
   },
   {

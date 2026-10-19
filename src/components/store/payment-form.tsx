@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { CheckCircle2, Upload } from "lucide-react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { CheckCircle2, ImagePlus, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { submitPayment, type PaymentSubmitResult } from "@/app/actions/checkout";
 
@@ -13,6 +13,9 @@ import { submitPayment, type PaymentSubmitResult } from "@/app/actions/checkout"
 export function PaymentForm({ orderNo, phone, compact }: { orderNo: string; phone: string; compact?: boolean }) {
   const [state, formAction, pending] = useActionState<PaymentSubmitResult | null, FormData>(submitPayment, null);
   const formRef = useRef<HTMLFormElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const shownFile = state?.ok ? null : fileName; // success resets the visible choice
 
   useEffect(() => {
     if (state?.ok) {
@@ -26,49 +29,70 @@ export function PaymentForm({ orderNo, phone, compact }: { orderNo: string; phon
       <input type="hidden" name="orderNo" value={orderNo} />
       <input type="hidden" name="phone" value={phone} />
 
-      <h3 className="font-display text-xl">Upload Payment Screenshot</h3>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        Attach the bank app / receipt screenshot showing the transferred amount.
+      <h3 className="font-display text-xl">Upload payment screenshot</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        From your bank app or receipt — showing the transferred amount.
       </p>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="pf-sender" className="label-caps mb-1.5 block">
-            Sender account name
-          </label>
-          <input
-            id="pf-sender"
-            name="senderName"
-            required
-            placeholder="Name on the transferring account"
-            className="h-11 w-full rounded-sm border border-stone bg-background px-3 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-gold"
-          />
-          {state && !state.ok && state.fieldErrors?.senderName && (
-            <p className="mt-1 text-xs text-destructive">{state.fieldErrors.senderName}</p>
-          )}
+      <div className="mt-5 grid gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="pf-sender" className="label-caps mb-1.5 block">
+              Sender account name
+            </label>
+            <input
+              id="pf-sender"
+              name="senderName"
+              required
+              placeholder="Name on the account"
+              className="h-11 w-full rounded-sm border border-stone bg-background px-3 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-gold"
+            />
+            {state && !state.ok && state.fieldErrors?.senderName && (
+              <p className="mt-1 text-xs text-destructive">{state.fieldErrors.senderName}</p>
+            )}
+          </div>
+          <div>
+            <label htmlFor="pf-ref" className="label-caps mb-1.5 block">
+              Transaction ref <span className="normal-case text-muted-foreground/70">(optional)</span>
+            </label>
+            <input
+              id="pf-ref"
+              name="transactionRef"
+              placeholder="e.g. 884213XXX"
+              className="h-11 w-full rounded-sm border border-stone bg-background px-3 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-gold"
+            />
+          </div>
         </div>
+
         <div>
-          <label htmlFor="pf-ref" className="label-caps mb-1.5 block">
-            Transaction reference <span className="normal-case text-muted-foreground/70">(optional)</span>
-          </label>
-          <input
-            id="pf-ref"
-            name="transactionRef"
-            placeholder="e.g. 884213XXX"
-            className="h-11 w-full rounded-sm border border-stone bg-background px-3 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-gold"
-          />
-        </div>
-        <div className={compact ? "sm:col-span-2" : "sm:col-span-2"}>
           <label htmlFor="pf-file" className="label-caps mb-1.5 block">
             Screenshot <span className="normal-case text-muted-foreground/70">(JPG, PNG or WEBP — max 5MB)</span>
           </label>
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className={`flex w-full items-center gap-3 rounded-sm border border-dashed px-4 py-4 text-left transition-colors focus:outline-none focus:ring-1 focus:ring-gold ${
+              shownFile ? "border-gold bg-gold/5" : "border-stone bg-background hover:border-gold/60"
+            }`}
+          >
+            <ImagePlus className={`h-5 w-5 shrink-0 ${shownFile ? "text-gold" : "text-muted-foreground"}`} strokeWidth={1.6} />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium">{shownFile ?? "Choose screenshot"}</span>
+              <span className="block text-[11.5px] text-muted-foreground">
+                {shownFile ? "Tap again to change" : "From your gallery or downloads"}
+              </span>
+            </span>
+            <Upload className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </button>
           <input
+            ref={fileRef}
             id="pf-file"
             name="screenshot"
             type="file"
             accept="image/jpeg,image/png,image/webp"
             required
-            className="block w-full rounded-sm border border-stone bg-background px-3 py-2.5 text-sm text-muted-foreground file:mr-3 file:rounded-sm file:border-0 file:bg-foreground file:px-3 file:py-1.5 file:text-xs file:font-medium file:uppercase file:tracking-wider file:text-background hover:file:bg-gold"
+            className="sr-only"
+            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
           />
           {state && !state.ok && state.fieldErrors?.screenshot && (
             <p className="mt-1 text-xs text-destructive">{state.fieldErrors.screenshot}</p>

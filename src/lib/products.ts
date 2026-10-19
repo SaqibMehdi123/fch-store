@@ -514,3 +514,27 @@ export const getHomeData = cache(async (): Promise<HomeData> => {
     featured: featured.map(toCardData),
   };
 });
+
+export type PopupAdData = {
+  id: string;
+  imageUrl: string;
+  headline: string | null;
+  subline: string | null;
+  linkUrl: string | null;
+};
+
+/** Newest active homepage popup — shown once per visitor on first load. */
+export const getActivePopupAd = cache(async (): Promise<PopupAdData | null> => {
+  const row = await db.popupAd.findFirst({
+    where: { isActive: true },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!row) return null;
+  return {
+    id: row.id,
+    imageUrl: row.imageUrl,
+    headline: row.headline,
+    subline: row.subline,
+    linkUrl: row.linkUrl,
+  };
+});

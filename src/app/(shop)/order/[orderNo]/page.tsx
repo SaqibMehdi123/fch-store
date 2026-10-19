@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Hash, Landmark, Upload } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { formatPKR, formatDateTime, phoneCore } from "@/lib/format";
@@ -46,40 +47,60 @@ export default async function OrderPage({ params, searchParams }: { params: Para
   const deadline = new Date(order.createdAt.getTime() + settings.paymentUploadDeadlineHours * 3600_000);
   const toNumber = (v: { toNumber: () => number } | null) => (v ? v.toNumber() : 0);
 
+  const steps = [
+    { icon: Landmark, title: "Transfer", body: <>Send <strong>{formatPKR(toNumber(order.total))}</strong> to the account on the right.</> },
+    { icon: Hash, title: "Reference", body: <>Use <strong className="font-mono">{order.orderNo}</strong> as the transfer note.</> },
+    { icon: Upload, title: "Upload", body: <>Screenshot below before <strong>{formatDateTime(deadline)}</strong>.</> },
+  ];
+
   return (
     <div className="mx-auto max-w-4xl px-6 py-8 lg:py-12">
-      <header className="border-b border-stone pb-6 text-center">
-        <p className="label-caps text-gold">Thank you, {order.customerName.split(" ")[0]}!</p>
+      <header className="border-b border-stone pb-6">
+        <p className="label-caps text-gold">Thank you, {order.customerName.split(" ")[0]}</p>
         <h1 className="mt-2 font-display text-3xl sm:text-4xl">Complete your payment</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Order <strong className="font-mono tracking-wide text-foreground">{order.orderNo}</strong> placed on{" "}
-          {formatDateTime(order.createdAt)}
-        </p>
-        <div className="mt-3 flex justify-center">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+          <span>Order <strong className="font-mono tracking-wide text-foreground">{order.orderNo}</strong></span>
+          <span aria-hidden>·</span>
+          <span>{formatDateTime(order.createdAt)}</span>
+          <span aria-hidden>·</span>
           <OrderStatusBadge status={order.status} />
         </div>
       </header>
 
       {canUpload && (
-        <div className="mt-6 rounded-sm border border-gold/40 bg-gold/5 px-4 py-3 text-sm text-foreground/85">
-          Transfer <strong>{formatPKR(toNumber(order.total))}</strong> to the account below, then upload the screenshot
-          before <strong>{formatDateTime(deadline)}</strong> — unpaid orders expire after{" "}
-          {settings.paymentUploadDeadlineHours} hours and release the reserved stock.
+        <div className="mt-8">
+          <p className="label-caps text-muted-foreground">How to pay</p>
+          <ol className="mt-3 grid gap-3 sm:grid-cols-3">
+            {steps.map(({ icon: Icon, title, body }, i) => (
+              <li key={title} className="rounded-sm border border-stone bg-card p-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[12px] font-semibold text-primary-foreground">
+                    {i + 1}
+                  </span>
+                  <Icon className="h-4.5 w-4.5 text-gold" strokeWidth={1.6} aria-hidden />
+                  <p className="text-sm font-semibold">{title}</p>
+                </div>
+                <p className="mt-2.5 text-[12.5px] leading-relaxed text-muted-foreground">{body}</p>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-2.5 text-[11.5px] text-muted-foreground">
+            Unpaid orders expire after {settings.paymentUploadDeadlineHours} hours and release the reserved stock.
+          </p>
         </div>
       )}
       {order.status === "payment_rejected" && order.payments[0]?.adminNote && (
-        <div className="mt-4 rounded-sm border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-foreground/85">
+        <div className="mt-6 rounded-sm border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-foreground/85">
           <strong>Payment rejected:</strong> {order.payments[0].adminNote}
         </div>
       )}
       {order.status === "payment_submitted" && (
-        <div className="mt-6 rounded-sm border border-stone bg-card px-4 py-3 text-sm text-foreground/85">
-          Your screenshot is in — our team reviews payments within {settings.paymentApprovalDeadlineHours} hours. You can
-          safely close this page; track progress anytime below.
+        <div className="mt-8 rounded-sm border border-stone bg-card px-4 py-3 text-sm text-foreground/85">
+          Screenshot received — we review within {settings.paymentApprovalDeadlineHours} hours. Track progress anytime below.
         </div>
       )}
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-2">
+      <div className="mt-10 grid gap-10 lg:grid-cols-2">
         {/* left: summary */}
         <section>
           <h2 className="font-display text-xl">Order Summary</h2>
@@ -119,15 +140,13 @@ export default async function OrderPage({ params, searchParams }: { params: Para
             </div>
           </dl>
 
-          {order.fulfillment === "delivery" ? (
-            <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
-              Delivering to: {order.address}, {order.city}
-            </p>
-          ) : (
-            <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
-              Pickup from: {settings.address || "our store"} — we&apos;ll WhatsApp you when it&apos;s ready.
-            </p>
-          )}
+          <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
+            {order.fulfillment === "delivery" ? (
+              <>Delivers to {order.address}, {order.city}.</>
+            ) : (
+              <>Pickup from {settings.address || "our store"} — we&apos;ll WhatsApp you when ready.</>
+            )}
+          </p>
 
           <Link href={`/track-order?order=${order.orderNo}`} className="btn-outline-luxury mt-6 inline-block">
             Track this order
@@ -146,8 +165,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
           {canUpload && <PaymentForm orderNo={order.orderNo} phone={phone} compact />}
           {!canUpload && (
             <p className="rounded-sm border border-stone bg-card p-4 text-sm text-muted-foreground">
-              Payment screenshot received{order.payments[0] ? ` (${formatDateTime(order.payments[0].createdAt)})` : ""} —
-              no further upload needed.
+              Screenshot received{order.payments[0] ? ` — ${formatDateTime(order.payments[0].createdAt)}` : ""}. No further upload needed.
             </p>
           )}
         </section>

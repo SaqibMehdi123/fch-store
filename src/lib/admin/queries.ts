@@ -512,6 +512,30 @@ export async function listAdminBanners() {
   return { rows: mapped, activeCount, totalCount: mapped.length };
 }
 
+export type AdminPopupAdRow = {
+  id: string;
+  imageUrl: string;
+  headline: string | null;
+  subline: string | null;
+  linkUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export async function listAdminPopupAds() {
+  const rows = await db.popupAd.findMany({ orderBy: [{ isActive: "desc" }, { createdAt: "desc" }] });
+  const mapped: AdminPopupAdRow[] = rows.map((p) => ({
+    id: p.id,
+    imageUrl: p.imageUrl,
+    headline: p.headline,
+    subline: p.subline,
+    linkUrl: p.linkUrl,
+    isActive: p.isActive,
+    createdAt: p.createdAt.toISOString(),
+  }));
+  return { rows: mapped, activeCount: mapped.filter((p) => p.isActive).length, totalCount: mapped.length };
+}
+
 export type AdminZoneRow = {
   id: string;
   name: string;

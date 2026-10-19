@@ -42,7 +42,7 @@ const labelCls = "mb-1 block text-[11px] uppercase tracking-[0.14em] text-muted-
 const emptyVariant = (): VariantRow => ({
   key: Math.random().toString(36).slice(2),
   colorName: "",
-  colorHex: "#1A1A1A",
+  colorHex: "#2B1F19",
   size: "",
   sku: "",
   stock: 10,
@@ -173,11 +173,11 @@ export function ProductForm({
           </div>
           <div className="mt-4 flex flex-wrap gap-6">
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={values.isActive} onChange={(e) => set("isActive", e.target.checked)} className="accent-[#B08D57]" />
+              <input type="checkbox" checked={values.isActive} onChange={(e) => set("isActive", e.target.checked)} className="accent-[#B08155]" />
               Live on the store
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={values.isFeatured} onChange={(e) => set("isFeatured", e.target.checked)} className="accent-[#B08D57]" />
+              <input type="checkbox" checked={values.isFeatured} onChange={(e) => set("isFeatured", e.target.checked)} className="accent-[#B08155]" />
               Featured (homepage edit)
             </label>
           </div>

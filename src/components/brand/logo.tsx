@@ -50,7 +50,7 @@ export function BrandLogo({
           fontFamily="var(--font-playfair), Georgia, 'Times New Roman', serif"
           fontSize="30"
           letterSpacing="4.5"
-          fill={light ? "#F8F6F2" : "#1A1A1A"}
+          fill={light ? "#FAF7F2" : "#2B1F19"}
         >
           FCH
         </text>
@@ -59,7 +59,7 @@ export function BrandLogo({
         <path
           d="M10,44.5 C38,51.5 66,41.5 92,45.5 C110,48.5 127,45 137,40.5"
           fill="none"
-          stroke="#B08D57"
+          stroke="#B08155"
           strokeWidth="1.2"
           strokeLinecap="round"
         />
@@ -67,14 +67,14 @@ export function BrandLogo({
         <path
           d="M137,40.5 C141,38.5 144,39 146,41.5"
           fill="none"
-          stroke="#B08D57"
+          stroke="#B08155"
           strokeWidth="1.2"
           strokeLinecap="round"
         />
 
         {/* khatam star — eight-point ornament above the tail of the thread */}
         <path
-          fill="#B08D57"
+          fill="#B08155"
           d="M128,7.8 L128.67,10.38 L130.97,9.03 L129.62,11.33 L132.2,12 L129.62,12.67 L130.97,14.97 L128.67,13.62 L128,16.2 L127.33,13.62 L125.03,14.97 L126.38,12.67 L123.8,12 L126.38,11.33 L125.03,9.03 L127.33,10.38 Z"
         />
       </svg>

@@ -20,9 +20,9 @@ import { Download } from "lucide-react";
 import { formatPKR, formatDate } from "@/lib/format";
 import type { ReportsData } from "@/lib/admin/reports";
 
-const GOLD = "#B08D57";
-const CHARCOAL = "#1A1A1A";
-const PIE_COLORS = ["#B08D57", "#1A1A1A", "#8C7A5B", "#C9B08C", "#5D5647", "#D9C7A7", "#3E3A33", "#A98F67"];
+const GOLD = "#B08155";
+const CHARCOAL = "#2B1F19";
+const PIE_COLORS = ["#722032", "#B08155", "#2B1F19", "#D9C2A5", "#8C5A45", "#5A1626", "#C9A97E", "#4A342A"];
 
 function isoDay(d: Date): string {
   return d.toISOString().slice(0, 10);
