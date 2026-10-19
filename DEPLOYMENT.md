@@ -1,373 +1,272 @@
-# FCH — Production Deployment Guide
+# FCH Store — Deployment Guide (Vercel + Neon + Cloudinary + Resend)
 
-This guide takes the FCH storefront from this repository to a live, production
-deployment on **Vercel + Neon PostgreSQL + Cloudinary + Resend**, ending with a
-go-live checklist and an operations runbook. Every step is written so the store
-owner (or any developer) can follow it top-to-bottom without prior Vercel
-experience. Total time for a first deployment: **60–90 minutes**, most of it
-waiting for DNS and email-domain verification.
+Target: **https://fch-store.scrutinies.dev** (subdomain of `scrutinies.dev`, DNS at **name.com**).
 
----
-
-## 1. Architecture overview
-
-```
-                 ┌──────────────────────────────┐
-   Customers ──▶ │  Vercel (Next.js 16 App      │
-                 │  Router, Node runtime)       │
-                 │  • Storefront  /  /women ...  │
-                 │  • Admin      /admin         │
-                 │  • Cron       /api/cron/*    │
-                 └───┬──────────┬─────────┬─────┘
-                     │          │         │
-            ┌────────▼───┐  ┌───▼────┐  ┌─▼─────────────┐
-            │ Neon       │  │Cloudi- │  │ Resend        │
-            │ PostgreSQL │  │nary    │  │ (email API)   │
-            │ (data)     │  │(media) │  │ or SMTP       │
-            └────────────┘  └────────┘  └───────────────┘
-```
-
-| Concern     | Production service | Local sandbox fallback |
-|-------------|--------------------|------------------------|
-| Database    | Neon PostgreSQL 17 | Portable Postgres via `scripts/pg-start.sh` |
-| Media files | Cloudinary (signed uploads) | `public/uploads/media/` on disk |
-| Payment screenshots | Cloudinary private folder `fch/payment-screenshots` | `uploads/payments/` via `/api/payments/[file]` |
-| Email       | Resend HTTP API (or any SMTP) | Preview transport — email HTML stored in Admin → Email Log, nothing sent |
-| Auth        | NextAuth credentials, admin-only, rate-limited | same |
-| Order expiry cron | Vercel Cron (`vercel.json`, hourly) | run `curl` manually |
-
-The app degrades gracefully: with no Cloudinary/Resend keys it still runs, but
-uploaded media lives on ephemeral disk and emails are only *previewed*. For
-production, complete steps 5 and 6.
+Do the steps **in order**. Steps 1–6 gather every value you will paste later, so
+by the time you reach Vercel (step 7) all environment variables are ready.
+Total time: ~60–90 minutes, mostly DNS/email verification waiting.
 
 ---
 
-## 2. Prerequisites
+## STEP 0 — Create your environment variables file (do this FIRST)
 
-- A GitHub account and this repository pushed to GitHub.
-- A **Vercel** account (free Hobby plan is enough to start; Pro recommended once
-  traffic grows).
-- A **Neon** account (free tier includes a project with branching and
-  point-in-time restore).
-- A **Cloudinary** account (free tier: 25 GB bandwidth/mo — ample for launch).
-- A **Resend** account (free tier: 3,000 emails/mo, 100/day) **or** SMTP
-  credentials from any provider.
-- A domain, e.g. `fch.pk` / `fchstore.com`, with access to its DNS records.
+Open a notepad and fill this table. Every blank is collected in steps 1–5;
+step 6 turns it into the final list you paste into Vercel.
 
----
+| # | Variable | Value | Where it comes from |
+|---|----------|-------|---------------------|
+| 1 | `DATABASE_URL` | `postgresql://…neon.tech/fch?sslmode=require` | Neon (step 1) |
+| 2 | `NEXTAUTH_URL` | `https://fch-store.scrutinies.dev` | your subdomain — type it now |
+| 3 | `NEXTAUTH_SECRET` | (long random string) | generate (step 2) |
+| 4 | `CRON_SECRET` | (long random string) | generate (step 2) |
+| 5 | `CLOUDINARY_CLOUD_NAME` | `…` | Cloudinary (step 3) |
+| 6 | `CLOUDINARY_API_KEY` | `…` | Cloudinary (step 3) |
+| 7 | `CLOUDINARY_API_SECRET` | `…` | Cloudinary (step 3) |
+| 8 | `RESEND_API_KEY` | `re_…` | Resend (step 4) |
+| 9 | `EMAIL_FROM` | `FCH Store <orders@fch-store.scrutinies.dev>` | decided — customers see only this |
+| 10 | `EMAIL_REPLY_TO` | `you@your-personal-email.com` | your real inbox — hidden, receives replies |
+| 11 | `DIRECT_URL` | `postgresql://…neon.tech/fch?sslmode=require` | Neon **direct** (non-pooled) URL (step 1) |
 
-## 3. Step 1 — Create the Neon database
-
-1. In the Neon console, **Create project** → name it `fch`, choose the region
-   closest to your customers (`AWS Singapore` or `AWS Mumbai` are good choices
-   for Pakistan).
-2. Open **Dashboard → Connection string → Pooled connection** and copy it. It
-   looks like:
-   ```
-   postgresql://<user>:<password>@<ep-name>-<id>.aws.neon.tech/neondb?sslmode=require
-   ```
-3. Append `&pgbouncer=true&connect_timeout=15` if you use the pooled URL with
-   server-side Prisma (Neon's copy button adds this for you in "Pooled" mode).
-4. Save it — this is your `DATABASE_URL`. Neon's free tier pauses compute after
-   5 minutes of inactivity; the first request after a pause adds ~500 ms, which
-   is normal.
-
-> **Note:** the schema targets PostgreSQL 14+ and uses no Postgres-specific
-> extensions, so any managed Postgres (Supabase, RDS, Railway) works too — just
-> use its connection string in place of Neon's.
-
----
-
-## 4. Step 2 — Apply migrations (and optional seed)
-
-From your machine, with the repo checked out:
+Copy-paste block (fill the brackets):
 
 ```bash
-cp .env.example .env
-# Edit .env and set DATABASE_URL to the Neon connection string
+DATABASE_URL="postgresql://[user]:[pass]@[ep-xxx-pooler].neon.tech/neondb?sslmode=require"
+DIRECT_URL="postgresql://[user]:[pass]@[ep-xxx].neon.tech/neondb?sslmode=require"
+NEXTAUTH_URL="https://fch-store.scrutinies.dev"
+NEXTAUTH_SECRET="[paste openssl output]"
+CRON_SECRET="[paste another openssl output]"
+CLOUDINARY_CLOUD_NAME="[cloud name]"
+CLOUDINARY_API_KEY="[api key]"
+CLOUDINARY_API_SECRET="[api secret]"
+RESEND_API_KEY="re_[api key]"
+EMAIL_FROM="FCH Store <orders@fch-store.scrutinies.dev>"
+EMAIL_REPLY_TO="[your personal email]"
+```
 
+How the masking works: every order/status email is sent **from** the store
+address (`EMAIL_FROM`); your personal address only appears as the hidden
+`Reply-To` (and only when a customer presses Reply). Customers never see it.
+
+---
+
+## STEP 1 — Database: create Neon (5 min)
+
+1. Go to **neon.com** → Sign up (free) → **Create project**.
+   - Name: `fch-store`. Region: the one closest to Pakistan (`aws-ap-south-1` Mumbai or similar).
+2. On the dashboard, find **Connection string**. Copy **both**:
+   - **Pooled** connection (host contains `-pooler`) → this is `DATABASE_URL`.
+   - **Direct** connection (no `-pooler`) → this is `DIRECT_URL` (used only for running migrations).
+3. Append `?sslmode=require` to both if not already present.
+4. No need to create tables now — step 8 applies the migrations.
+
+---
+
+## STEP 2 — Generate the two secrets (1 min)
+
+On your computer's terminal (or any online generator):
+
+```bash
+openssl rand -base64 32   # → NEXTAUTH_SECRET
+openssl rand -base64 32   # → CRON_SECRET (run again)
+```
+
+Paste them into the STEP 0 table. They are just random strings — nothing to sign up for.
+
+---
+
+## STEP 3 — Media: create Cloudinary (10 min)
+
+1. Go to **cloudinary.com** → Sign up free.
+2. Console → **Settings → Access Keys** → copy **Cloud name**, **API key**, **API secret** into the table.
+3. Create two folders (Media Library → New Folder):
+   - `fch/products` — product photos (admin uploads here through the panel)
+   - `fch/payments` — customer payment screenshots (**private**)
+4. Make the payments folder private: Settings → Security → **Restricted media types / unsigned uploads OFF** is default; the app's `/api/admin/upload` route signs uploads with your API secret, so nothing is public unless you share a link. Payment screenshots are only viewable by the logged-in admin through the app.
+
+> If you skip Cloudinary entirely, the store still works with the bundled
+> placeholder images — you can add the key later and upload real photos
+> through Admin → Products.
+
+---
+
+## STEP 4 — Email: create Resend + verify your subdomain (20 min, mostly waiting)
+
+This is what makes mail come from the store, not from your personal Gmail.
+
+1. Go to **resend.com** → Sign up → **API Keys → Create API key**
+   - Name: `fch-store-production`, Permission: **Full access** (sending needs it).
+   - Copy `re_…` into the table. **Show it only once — store it now.**
+2. Left menu → **Domains → Add Domain**
+   - Enter: `fch-store.scrutinies.dev`
+   - Region: any (choose closest to your customers).
+3. Resend shows a table of DNS records. **Add every record it shows at name.com** (do this together with the Vercel record in step 6 — see the combined DNS table below). Resend needs:
+   - **DKIM** — 1–2 `CNAME` records (e.g. `resend._domainkey` / `smtp._domainkey`) → proves mail is really from you.
+   - **SPF** — a `TXT` record on the subdomain host (e.g. `send` or `fch-store`) with `v=spf1 include:...~all` or a CNAME to Resend's bounce host — the dashboard shows the exact host/value.
+   - **DMARC** (recommended) — a `TXT` record at `_dmarc.fch-store.scrutinies.dev`:
+     `v=DMARC1; p=none; rua=mailto:you@your-personal-email.com`
+4. Back in Resend press **Verify**. Records can take 5–60 min to propagate; keep pressing Verify until it turns **Verified**.
+5. Your `EMAIL_FROM` = `FCH Store <orders@fch-store.scrutinies.dev>` is now authorised to send.
+
+> Note: Resend is **outbound only** (order confirmations, status updates,
+> contact-form notifications). Customers who reply land in
+> `EMAIL_REPLY_TO`. There is no mailbox needed at name.com — the
+> contact form and WhatsApp handle inbound customer messages.
+
+---
+
+## STEP 5 — Optional but recommended accounts
+
+- **Google Search Console** (search.google.com/search-console) — add `fch-store.scrutinies.dev`, verify via DNS TXT at name.com, then submit `https://fch-store.scrutinies.dev/sitemap.xml`.
+- **WhatsApp** — the site links a WhatsApp number from Admin → Settings; use your business number.
+
+---
+
+## STEP 6 — DNS records at name.com (10 min, propagates ≤ 1 hour)
+
+Log in to **name.com** → My Domains → **scrutinies.dev** → **DNS / Manage DNS Records**.
+Add these records. (Resend's values come from step 4 — theirs win if different.)
+
+| Type | Host / Name | Value | Purpose |
+|------|-------------|-------|---------|
+| `CNAME` | `fch-store` | `cname.vercel-dns.com` | points the subdomain at Vercel |
+| `CNAME` | `resend._domainkey.fch-store` (as shown by Resend) | (Resend DKIM value) | email authenticity |
+| `TXT` or `CNAME` | as shown by Resend (SPF/bounce) | (Resend value) | email authenticity |
+| `TXT` | `_dmarc.fch-store` | `v=DMARC1; p=none; rua=mailto:you@your-personal-email.com` | anti-spoof policy |
+
+Tips:
+- In name.com, entering host `fch-store` means `fch-store.scrutinies.dev`.
+- If name.com auto-appends `.scrutinies.dev` to what you type, remove the
+  duplicate — the final host must read exactly `fch-store` (Vercel) and
+  whatever Resend prints for the email records.
+- TTL: leave at default.
+
+---
+
+## STEP 7 — Deploy to Vercel (10 min)
+
+1. Go to **vercel.com** → sign in **with GitHub** (authorize access to `SaqibMehdi123`).
+2. **Add New… → Project** → Import **`fch-store`**.
+3. Framework Preset: **Next.js** (auto). Build/install commands: leave defaults.
+4. **Before pressing Deploy**: open **Environment Variables** and add all 11
+   variables from your STEP 0 table, exactly by name. Select the
+   Production/Preview/Development checkboxes (Production is the important one).
+5. Press **Deploy**. First build takes 2–4 minutes.
+6. It will deploy to a temporary `fch-store-xxx.vercel.app` — fine for now.
+
+---
+
+## STEP 8 — Create the database schema + seed (5 min)
+
+From your own computer's terminal (one-time):
+
+```bash
+git clone https://github.com/SaqibMehdi123/fch-store.git
+cd fch-store
 bun install
-bun run db:migrate          # applies every migration in prisma/migrations
-bun run db:seed             # OPTIONAL: demo products, banners, coupons, CMS pages
+
+# 1. tables
+DATABASE_URL="<DIRECT_URL>" bunx prisma migrate deploy
+
+# 2. demo catalog (products, categories, banners, admin user, pages)
+DATABASE_URL="<DIRECT_URL>" bunx prisma db seed
 ```
 
-- `db:migrate` is safe on an empty database and idempotent afterwards.
-- `db:seed` **clears and re-creates** all demo content — never run it against a
-  database that already holds real orders/products. For go-live you have two
-  options:
-  1. **Seed first, then edit** — seed once, log into `/admin`, delete the demo
-     products, replace settings with your real ones, and upload real
-     photography; or
-  2. **Start empty** — skip the seed and create categories/products by hand in
-     the admin panel (recommended for a clean launch).
-- The seed creates the owner account `owner@fch.pk / ChangeMe#2024` —
-  **change this password immediately after first login** (Step 7).
+> Production alternative: skip the demo seed and enter your real catalog
+> through Admin → Products. But run the seed at least once — it creates the
+> owner admin account and the CMS pages.
 
 ---
 
-## 5. Step 3 — Import the repo into Vercel
+## STEP 9 — Connect the subdomain (5 min + DNS wait)
 
-1. Vercel → **Add New → Project** → select the GitHub repo `fch-store`.
-2. Framework preset: **Next.js** (auto-detected). Build command and output can
-   stay at their defaults — the repo's `output: "standalone"` setting only
-   affects self-hosted builds and is ignored by Vercel.
-3. Do **not** deploy yet — add environment variables first (Step 4), then
-   click **Deploy**. The first build takes ~2 minutes.
+1. Vercel → your project → **Settings → Domains → Add** → type
+   `fch-store.scrutinies.dev` → Add.
+2. Vercel checks the `CNAME` from step 6. If it isn't visible yet, it shows
+   "Invalid Configuration" — wait for DNS propagation and press **Refresh**.
+3. When valid, Vercel issues the HTTPS certificate automatically (a few minutes).
+4. Visit **https://fch-store.scrutinies.dev** — storefront live. 🎉
 
-After the first successful deploy, Vercel gives you a `*.vercel.app` URL you
-can use immediately; a custom domain comes in Step 8.
-
----
-
-## 6. Step 4 — Environment variables
-
-In Vercel → Project → **Settings → Environment Variables**, add:
-
-| Variable | Required | Value | Notes |
-|---|---|---|---|
-| `DATABASE_URL` | ✅ | Neon **pooled** connection string | Same value you used for migrations |
-| `NEXTAUTH_URL` | ✅ | `https://your-domain.com` | Full origin, no trailing slash. Drives absolute links in emails and canonical metadata |
-| `NEXTAUTH_SECRET` | ✅ | `openssl rand -base64 32` | Session signing key — rotate only when you want to log every admin out |
-| `CRON_SECRET` | ✅ | long random string | Protects `/api/cron/expire-orders`; Vercel Cron sends it as a Bearer token |
-| `CLOUDINARY_CLOUD_NAME` | production | Cloudinary **cloud name** | Media uploads fall back to ephemeral disk without it |
-| `CLOUDINARY_API_KEY` | production | Cloudinary API key | |
-| `CLOUDINARY_API_SECRET` | production | Cloudinary API secret | Keep secret; used for signed uploads |
-| `RESEND_API_KEY` | production | Resend API key | Omit only if using SMTP |
-| `EMAIL_FROM` | production | `FCH <orders@fch.pk>` | Must be a Resend-verified sender (Step 6) |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` | alternative | SMTP credentials | Set `SMTP_HOST` to activate; takes a back seat to Resend when both are present |
-
-Rules of thumb:
-
-- Set the same variables for **Production**, **Preview**, and **Development**
-  environments in Vercel, but you may point Preview at a Neon *branch* database
-  so previews never touch production data.
-- Never commit a real `.env` — `.env.example` is the template and the source of
-  truth for variable names.
+> Keep `NEXTAUTH_URL` exactly `https://fch-store.scrutinies.dev` — it drives
+> canonical URLs, the sitemap, admin login cookies and email links.
 
 ---
 
-## 7. Step 5 — Cloudinary (media)
+## STEP 10 — Post-deploy verification (15 min)
 
-1. Create the account; note the **cloud name** from the dashboard.
-2. **API keys**: Dashboard → Settings → Access Keys → generate a key pair. Put
-   the three values into Vercel env vars.
-3. Folders used by the app (created automatically on first upload):
-   - `media/` — product and banner images uploaded from Admin → Products /
-     Banners (public assets, served via Cloudinary CDN);
-   - `fch/payment-screenshots/` — customer payment screenshots. **Treat this
-     folder as private**: in Cloudinary → Settings → Restricted, hide it from
-     media library sharing; only admins open its URLs.
-4. Uploads are **signed** (SHA-1 signature over folder/public_id/timestamp),
-   so the API secret never reaches the browser.
-5. **Why this matters on Vercel:** without Cloudinary, storefront media uploads
-   are written to `public/uploads/` on the running instance — which Vercel
-   wipes on every deploy and may not persist between serverless invocations.
-   Cloudinary is the durable store; configure it before uploading real
-   photography.
+Run through every surface — each should answer:
 
----
+**Storefront (customer side)**
 
-## 8. Step 6 — Resend (transactional email)
+| URL | Expect |
+|-----|--------|
+| `https://fch-store.scrutinies.dev/` | homepage, banners, product rails |
+| `/shop`, `/women`, `/men`, `/kids` | catalogues with working filters/sort/search |
+| `/product/<any-slug>` | gallery, variants, reviews, JSON-LD |
+| `/cart` → `/checkout` | full guest checkout with bank-transfer instructions |
+| `/wishlist`, `/track-order` | localStorage wishlist, order lookup |
+| `/about`, `/contact`, `/faq`, `/terms`, `/privacy` | CMS pages |
+| `/sitemap.xml`, `/robots.txt`, `/llms.txt` | 200s |
+| random fake URL | branded 404 |
 
-1. Create the account and generate an **API key** (Dashboard → API Keys).
-2. **Verify your sending domain**: Resend → Domains → Add (`fch.pk`) → add the
-   DKIM/SPF/DMARC TXT records it shows at your DNS provider → wait for
-   verification (usually minutes, up to 24 h).
-3. Set `EMAIL_FROM="FCH <orders@fch.pk>"` (any address @ your verified domain).
-4. The app queues every email in the `email_log` table *inside the same DB
-   transaction* as the business change, then delivers after commit via the
-   Resend HTTP API. Duplicate sends are impossible (unique index + only
-   `queued` rows are sent), and failures can be retried from
-   **Admin → Email Log**.
-5. **SMTP alternative:** set the `SMTP_*` variables instead — for example,
-   any transactional provider or a branded mailbox via Hostinger/Zoho. When
-   both Resend and SMTP are configured, Resend wins.
+**Admin side**
 
-Emails sent: order confirmation, payment-received, payment-rejected, order
-expired, shipping/tracking update, order cancellation, and the contact-form
-acknowledgement — all rendered from the branded template in
-`src/lib/email/templates.ts`.
+| URL / action | Expect |
+|-----|--------|
+| `/admin/login` → owner@fch.pk / `ChangeMe#2024` | dashboard loads |
+| Orders → open one → advance status | email fires via Resend |
+| Products → new/edit → image upload | Cloudinary upload works |
+| Settings | fill phone, WhatsApp, email, address, IBAN |
+| Reports, Coupons, Banners, Pages, Team, Email Log | all open |
 
----
+**Emails**
 
-## 9. Step 7 — First login & admin hardening
+1. Place a real test order as a customer.
+2. Check the customer's inbox: mail **from `FCH Store <orders@fch-store.scrutinies.dev>`**, not your personal address.
+3. Hit Reply — it should address your personal inbox (masked).
+4. Admin → Email Log shows every send with status.
 
-1. Visit `https://your-domain.com/admin` → sign in with
-   `owner@fch.pk / ChangeMe#2024` (seeded) — or the credentials you chose if
-   you started empty.
-2. **Change the password immediately** (Admin → Account). Login is rate
-   limited to 5 attempts / 15 min / email+IP.
-3. Add a second admin account for redundancy before launch.
+**Cron (order expiry)**
+
+- `vercel.json` schedules `GET /api/cron/expire-orders` hourly; Vercel
+  injects your `CRON_SECRET` automatically. Check Admin → Orders: unpaid
+  orders expire after their window and stock is restored.
+- Manual test: `curl -X GET -H "Authorization: Bearer <CRON_SECRET>" https://fch-store.scrutinies.dev/api/cron/expire-orders` → `{"ok":true,...}`
 
 ---
 
-## 10. Step 8 — Custom domain
+## STEP 11 — Go-live hardening (10 min, DO NOT SKIP)
 
-1. Vercel → Project → **Settings → Domains** → add `your-domain.com` and
-   `www.your-domain.com`.
-2. At your registrar, point DNS as Vercel instructs — typically:
-   - Apex `A` record → `76.76.21.21`, or ALIAS/ANAME if supported;
-   - `CNAME` for `www` → `cname.vercel-dns.com`.
-3. HTTPS certificates are issued and renewed automatically by Vercel.
-4. Set `NEXTAUTH_URL` to the final domain (with `https://`) and redeploy so
-   email links and canonical URLs follow.
-5. `.pk` domains: register through a PKNIC-approved reseller; PKNIC requires
-   name servers before approval — point them at Vercel's DNS or your
-   registrar's, then follow step 2.
+1. **Change the admin password** — Admin → Team → edit owner → set a strong password. The seeded one is public in this repo.
+2. **Store details** — Admin → Settings: phone, WhatsApp, email, address, IBAN, free-shipping threshold, order-expiry window.
+3. **Content** — Admin → Pages: replace the `TODO(OWNER)` placeholder text in About; review FAQ/Terms/Privacy.
+4. **Products** — replace demo products with real ones (or delete them) and upload real photos to Cloudinary.
+5. **Banners** — upload real hero banners (Admin → Banners).
+6. **Search Console** — submit the sitemap (step 5).
 
 ---
 
-## 11. Step 9 — Order-expiry cron
+## Operations runbook
 
-`vercel.json` in the repo already registers an hourly Vercel Cron:
+| Task | How |
+|------|-----|
+| Update the site | push to `main` → Vercel auto-deploys (~2 min) |
+| Change code that touched the Prisma schema | run `DATABASE_URL="<DIRECT_URL>" bunx prisma migrate deploy` **before** the deploy goes live |
+| Roll back a bad deploy | Vercel → Deployments → ⋯ on last good one → **Promote to Production** |
+| Check errors | Vercel → project → **Logs** (runtime) / **Build Logs** |
+| Retry a failed email | Admin → Email Log → the failed row → Retry |
+| Rotate Resend key | new key in Resend → update `RESEND_API_KEY` in Vercel → redeploy |
+| Rotate CRON_SECRET | new value in Vercel env → redeploy (Vercel cron picks it up) |
+| Free-tier limits | Neon: storage/compute hours · Cloudinary: 25 credits/mo · Resend: 100 emails/day (3,000/mo) — upgrade when the store grows |
 
-```json
-{ "crons": [{ "path": "/api/cron/expire-orders", "schedule": "0 * * * *" }] }
-```
+## Troubleshooting
 
-- The route expires unpaid orders past the payment-upload deadline, restores
-  reserved stock, and queues branded expiry emails.
-- It requires `CRON_SECRET` to be set; Vercel sends it automatically as
-  `Authorization: Bearer <CRON_SECRET>`.
-- Verify after deploy:
-
-  ```bash
-  curl -s https://your-domain.com/api/cron/expire-orders \
-       -H "Authorization: Bearer $CRON_SECRET"
-  # → {"expired": 0, ...}
-  ```
-
-- Deadlines are configurable in Admin → Settings
-  (`payment_upload_deadline_hours`, `payment_approval_deadline_hours`).
-
----
-
-## 12. Go-live checklist
-
-Work through this list in order; every item has a place in the admin panel.
-
-**Store settings (Admin → Settings) — replace every `TODO(OWNER)` / `[REPLACE]` value:**
-
-- [ ] Bank name, account title, IBAN (shown at checkout for bank transfer)
-- [ ] WhatsApp number, phone, contact email, shop address
-- [ ] Instagram / Facebook / TikTok URLs
-- [ ] Announcement bar text + free-shipping threshold
-- [ ] Payment upload & approval deadlines
-
-**Catalog & content:**
-
-- [ ] Delete seeded demo products (or keep the ones you want); create real
-      products with real photography via Admin → Products (uploads go to
-      Cloudinary once configured)
-- [ ] Review category tree (Women / Men / Kids subcategories) and menus
-- [ ] Banners: replace seeded hero slides
-- [ ] Pages: edit About, FAQ, Terms, Privacy (they ship with `TODO(OWNER)`
-      placeholders — have Terms/Privacy legally reviewed before launch)
-
-**Security & accounts:**
-
-- [ ] Owner password changed; second admin created
-- [ ] `NEXTAUTH_SECRET` and `CRON_SECRET` are long random strings, not defaults
-- [ ] Cloudinary restricted-media-library setting applied to
-      `fch/payment-screenshots`
-
-**End-to-end test on production (do a real order with a small amount):**
-
-- [ ] Place an order → bank-transfer instructions shown → upload payment
-      screenshot as a customer would
-- [ ] Admin → Orders: see the order, verify the payment → status emails arrive
-- [ ] Email Log shows every message `sent` (not `preview`)
-- [ ] Expire an unpaid test order (or wait for the cron) → stock restored,
-      expiry email queued
-- [ ] Track-order page works with the order number
-
-**SEO & plumbing:**
-
-- [ ] `/sitemap.xml` lists products, categories and pages;
-      `/robots.txt` references it
-- [ ] `/api/health` returns `{"status":"ok"}` (uptime monitor target)
-- [ ] 404 page renders the branded not-found screen
-- [ ] Metadata/OG previews look right (paste the URL into WhatsApp — the
-      preview card should show the FCH title and description)
-
----
-
-## 13. Operations runbook
-
-**Daily**
-
-- Admin → Orders: verify incoming payment screenshots within
-  `payment_approval_deadline_hours`; approve/reject with a note (email is
-  automatic).
-- Admin → Email Log: any row with status `failed` has a **Retry** button.
-
-**Weekly**
-
-- Admin → Reports: sales summary, top products, low stock, exportable CSV
-  (orders export includes the payment-verification trail).
-- Admin → Inventory: restock low variants (low-stock is flagged at ≤ 3 units
-  by the seed convention; thresholds live in the admin screens).
-
-**Backups**
-
-- Neon: free tier includes **point-in-time restore** (7 days) and historical
-  branch copies. For extra safety, periodically run
-  `pg_dump "$DATABASE_URL" > fch-backup-$(date +%F).sql` from your machine.
-- Cloudinary: assets are versioned; enable automatic backup in Cloudinary
-  settings if you want off-Cloudinary copies.
-
-**Monitoring**
-
-- Point an uptime monitor (UptimeRobot, BetterStack — free tiers) at
-  `GET /api/health`. It checks the database round-trip, not just the process.
-- Vercel Analytics (enable in the project) gives traffic and Core Web Vitals.
-
-**Deploying changes**
-
-- Push to `main` → Vercel builds and promotes automatically; rollbacks are
-  one click (Deployments → previous build → **Promote**).
-- Schema changes: commit the migration to the repo (`prisma/migrations`),
-  then run `bun run db:migrate` against production from your machine (or via
-  a one-off job) **before** the code that uses it deploys.
-
----
-
-## 14. Troubleshooting
-
-| Symptom | Likely cause & fix |
-|---|---|
-| Pages 500 on Vercel, `P1001` in logs | `DATABASE_URL` wrong/unreachable. Use the **pooled** Neon URL; ensure `sslmode=require` |
-| Cron returns `401` | `CRON_SECRET` not set in Vercel env, or you're calling with a stale value. Vercel Cron only sends the header if the variable exists |
-| Cron returns `500` "CRON_SECRET not configured" | Variable missing in the **Production** environment |
-| Uploaded images vanish after a deploy | Cloudinary env vars not set — uploads were written to ephemeral disk. Configure Cloudinary, re-upload |
-| Cloudinary upload `401` | API secret mismatch or system clock skew on the signing server (rare on Vercel) |
-| Emails marked `sent` with a "preview transport" note | No `RESEND_API_KEY` and no `SMTP_HOST` — nothing was actually delivered. Configure a provider |
-| Resend `403` on send | Sender domain not verified, or `EMAIL_FROM` uses an address outside a verified domain |
-| Admin login locked out | Rate limit: 5 attempts / 15 min per email+IP. Wait, or clear `rate_limit` rows |
-| Wrong links in emails (localhost) | `NEXTAUTH_URL` still points at localhost — fix it and redeploy |
-
----
-
-## 15. Self-hosting alternative (Docker / VPS)
-
-If you'd rather not use Vercel:
-
-1. Provision PostgreSQL 14+ and set `DATABASE_URL`, `NEXTAUTH_URL`,
-   `NEXTAUTH_SECRET`, `CRON_SECRET` (+ Cloudinary/Resend) in the environment.
-2. Build and run the standalone server:
-
-   ```bash
-   bun install && bun run build
-   NODE_ENV=production node .next/standalone/server.js   # PORT defaults to 3000
-   ```
-
-3. Put Nginx or Caddy in front for TLS; Caddy gives automatic certificates:
-   `your-domain.com { reverse_proxy 127.0.0.1:3000 }`
-4. Replace Vercel Cron with a system crontab entry:
-
-   ```
-   0 * * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://your-domain.com/api/cron/expire-orders
-   ```
-
-5. `uploads/` and `public/uploads/` are on real disk here — still prefer
-   Cloudinary so multiple instances can share media.
+| Symptom | Cause → Fix |
+|---------|-------------|
+| Build fails with Prisma errors | `DATABASE_URL` missing/mistyped in Vercel env → recheck, redeploy |
+| `/api/health` returns 503 | DB unreachable → check Neon is active (free tier pauses after inactivity; wake it in the Neon console) |
+| Admin login loops back to login | `NEXTAUTH_URL` ≠ the domain in the browser bar, or `NEXTAUTH_SECRET` missing |
+| Emails don't arrive | Resend domain not Verified yet, or `EMAIL_FROM` domain ≠ verified domain → finish step 4 |
+| Emails in spam | DMARC record missing → add `_dmarc` TXT from step 4/6 |
+| Domain shows Vercel 404 / NOT_FOUND | DNS CNAME not propagated yet, or host entered as `fch-store.scrutinies.dev.scrutinies.dev` in name.com |
+| Cloudinary upload 401 | API secret mistyped in Vercel env |
+| Cron 401 in logs | `CRON_SECRET` changed in Vercel but app not redeployed |

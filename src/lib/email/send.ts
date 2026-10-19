@@ -45,6 +45,9 @@ type TransportResult = { ok: true; via: string } | { ok: false; error: string };
 
 async function deliver(to: string, subject: string, html: string): Promise<TransportResult> {
   const from = process.env.EMAIL_FROM ?? "FCH <onboarding@resend.dev>";
+  // Customers see only the store address in "From"; replies route to the
+  // owner's real inbox when EMAIL_REPLY_TO is set.
+  const replyTo = process.env.EMAIL_REPLY_TO?.trim();
 
   if (process.env.RESEND_API_KEY) {
     try {
@@ -54,7 +57,13 @@ async function deliver(to: string, subject: string, html: string): Promise<Trans
           Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ from, to: [to], subject, html }),
+        body: JSON.stringify({
+          from,
+          to: [to],
+          subject,
+          html,
+          ...(replyTo ? { reply_to: replyTo } : {}),
+        }),
       });
       if (!res.ok) {
         const body = await res.text().catch(() => "");
@@ -74,7 +83,7 @@ async function deliver(to: string, subject: string, html: string): Promise<Trans
         secure: process.env.SMTP_SECURE === "true",
         auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
       });
-      await mailer.sendMail({ from, to, subject, html });
+      await mailer.sendMail({ from, to, subject, html, ...(replyTo ? { replyTo } : {}) });
       return { ok: true, via: "smtp" };
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : "SMTP send failed" };
