@@ -523,12 +523,19 @@ export type PopupAdData = {
   linkUrl: string | null;
 };
 
-/** Newest active homepage popup — shown once per visitor on first load. */
+/** Newest active homepage popup — shown once per visitor on first load.
+ *  Fails soft: a DB hiccup during build-time prerender must never break the build. */
 export const getActivePopupAd = cache(async (): Promise<PopupAdData | null> => {
-  const row = await db.popupAd.findFirst({
-    where: { isActive: true },
-    orderBy: { createdAt: "desc" },
-  });
+  let row: Awaited<ReturnType<typeof db.popupAd.findFirst>> = null;
+  try {
+    row = await db.popupAd.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (err) {
+    console.error("[popup-ad] query failed, skipping popup:", err);
+    return null;
+  }
   if (!row) return null;
   return {
     id: row.id,
