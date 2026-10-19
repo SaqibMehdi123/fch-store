@@ -4,7 +4,8 @@ import { getSettings } from "@/lib/settings";
 import { flushOrderEmails, queueOrderEmail } from "@/lib/email/send";
 
 /**
- * Hourly cron (Vercel cron → vercel.json) — expires unpaid orders:
+ * Daily cron (Vercel cron → vercel.json, Hobby-plan max frequency) — expires
+ * unpaid orders:
  * 1. awaiting_payment with no screenshot after the upload deadline (24h default)
  * 2. payment_rejected with no re-upload after the deadline
  * Stock reserved by expired orders is restored, branded expiry emails are

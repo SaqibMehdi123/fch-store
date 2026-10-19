@@ -180,7 +180,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormState }) {
           </div>
         </Section>
 
-        <Section title="Order deadlines" hint="Applies to bank-transfer orders; unpaid orders expire automatically via the hourly cron.">
+        <Section title="Order deadlines" hint="Applies to bank-transfer orders; unpaid orders expire automatically via the daily cron.">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={label} htmlFor="s-upload">Upload deadline (hours)</label>

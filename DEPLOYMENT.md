@@ -241,8 +241,14 @@ DATABASE_URL="<DIRECT_URL>" bunx prisma db seed
 
 **Cron (order expiry)**
 
-- `vercel.json` schedules `GET /api/cron/expire-orders` hourly; Vercel
-  injects your `CRON_SECRET` automatically.
+- `vercel.json` schedules `GET /api/cron/expire-orders` **daily at 03:00 UTC
+  (08:00 PKT)**; Vercel injects your `CRON_SECRET` automatically.
+- Daily is the maximum frequency allowed on the Vercel Hobby (free) plan.
+  With the default 24-hour upload deadline, an abandoned order can hold its
+  stock for up to ~48 hours before expiry. If you need tighter cleanup,
+  either upgrade to Vercel Pro or add a free external scheduler
+  (e.g. cron-job.org or a GitHub Actions scheduled workflow) that hits the
+  same endpoint more often — it is idempotent, so extra calls are safe.
 - Manual test: `curl -X GET -H "Authorization: Bearer <CRON_SECRET>" https://fch-store.scrutinies.dev/api/cron/expire-orders` → `{"ok":true,...}`
 
 ---
