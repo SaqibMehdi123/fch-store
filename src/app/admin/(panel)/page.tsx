@@ -85,8 +85,9 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        {/* recent orders */}
-        <div className="rounded-sm border border-stone bg-card lg:col-span-2">
+        {/* recent orders — min-w-0: without it the implicit mobile grid track sizes to min-content
+            (truncate = white-space:nowrap) and the card forces horizontal overflow on phones */}
+        <div className="min-w-0 overflow-hidden rounded-sm border border-stone bg-card lg:col-span-2">
           <div className="border-b border-stone px-5 py-4">
             <h2 className="font-display text-lg">Recent Orders</h2>
           </div>
@@ -102,11 +103,11 @@ export default async function AdminDashboardPage() {
                     href={`/admin/orders/${o.orderNo}`}
                     className="flex items-center justify-between gap-3 px-5 py-3.5 transition-colors hover:bg-secondary"
                   >
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">
                         {o.orderNo} · {o.customerName}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="truncate text-xs text-muted-foreground">
                         {formatDate(o.createdAt)} · {o.city} · {o.itemCount} item{o.itemCount === 1 ? "" : "s"}
                       </p>
                     </div>
@@ -123,8 +124,8 @@ export default async function AdminDashboardPage() {
           )}
         </div>
 
-        {/* stock alerts */}
-        <div className="rounded-sm border border-stone bg-card">
+        {/* stock alerts — same min-w-0 guard as recent orders */}
+        <div className="min-w-0 overflow-hidden rounded-sm border border-stone bg-card">
           <div className="flex items-center justify-between border-b border-stone px-5 py-4">
             <h2 className="font-display text-lg">Stock Alerts</h2>
             <Boxes className="h-4 w-4 text-gold" strokeWidth={1.8} />
@@ -136,7 +137,7 @@ export default async function AdminDashboardPage() {
               <ul className="divide-y divide-stone">
                 {stats.lowStock.map((v) => (
                   <li key={v.sku} className="flex items-center justify-between gap-3 px-5 py-3">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm">{v.productName}</p>
                       <p className="truncate text-xs text-muted-foreground">
                         {v.color} · {v.size} · {v.sku}
