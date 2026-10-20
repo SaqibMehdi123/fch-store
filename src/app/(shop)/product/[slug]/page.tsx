@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Star, Truck, ShieldCheck, RefreshCcw, BadgeCheck } from "lucide-react";
 import { getProductBySlug, getRelatedProducts } from "@/lib/products";
+import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { discountPercent, formatDate, formatPKR } from "@/lib/format";
 import { ProductGallery } from "@/components/store/product-gallery";
@@ -18,12 +19,27 @@ type Params = Promise<{ slug: string }>;
 
 /**
  * On-demand ISR — product pages are cookie-free and parameter-free, so they
- * render once and cache at the edge for 15 minutes. Uncached SSR was taking
- * 5-6s TTFB (multi-hop Neon queries), which starves crawler budgets — Bing
- * was reporting product URLs as "discovered but not crawled". Edge hits land
- * in ~100-300ms, keeping the catalogue crawl-friendly.
+ * prerender at build (generateStaticParams) and revalidate at the edge every
+ * 15 minutes. Uncached SSR was taking 5-6s TTFB (multi-hop Neon queries),
+ * which starves crawler budgets — Bing was reporting product URLs as
+ * "discovered but not crawled". Edge hits land in ~100-300ms, keeping the
+ * catalogue crawl-friendly.
  */
 export const revalidate = 900;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  try {
+    const slugs = await db.product.findMany({
+      where: { isActive: true },
+      select: { slug: true },
+    });
+    return slugs.map((p) => ({ slug: p.slug }));
+  } catch {
+    // DB unreachable during build — fall back to fully on-demand rendering.
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
