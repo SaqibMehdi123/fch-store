@@ -49,7 +49,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         _count: true,
       }),
       db.order.count({ where: { createdAt: { gte: weekAgo } } }),
-      db.payment.count({ where: { status: "submitted" } }),
+      db.payment.count({ where: { status: "submitted", order: { status: "payment_submitted" } } }),
       db.order.groupBy({ by: ["status"], _count: true }),
       db.order.findMany({
         orderBy: { createdAt: "desc" },
@@ -216,7 +216,10 @@ export type AdminOrder = NonNullable<Awaited<ReturnType<typeof getAdminOrder>>>;
 
 export async function listVerificationQueue() {
   const rows = await db.payment.findMany({
-    where: { status: "submitted" },
+    // Only payments whose order is still awaiting a decision. Guards against
+    // legacy rows stuck in "submitted" after the order was resolved from the
+    // order tab — those must never occupy the queue.
+    where: { status: "submitted", order: { status: "payment_submitted" } },
     orderBy: { createdAt: "asc" },
     include: {
       order: {

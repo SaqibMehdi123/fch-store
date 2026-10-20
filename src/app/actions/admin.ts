@@ -81,6 +81,19 @@ export async function setOrderStatus(input: {
       },
     });
 
+    // Resolve pending payment rows when the decision is taken from the order
+    // tab — the verification queue lists payments with status "submitted",
+    // so leaving them submitted would pin the order in the queue forever.
+    if (order.status === "payment_submitted") {
+      await tx.payment.updateMany({
+        where: { orderId: order.id, status: "submitted" },
+        data: {
+          status: input.next === "confirmed" ? "approved" : "rejected",
+          ...(input.next === "confirmed" ? {} : { adminNote: input.note?.trim() || "Decided from the order page." }),
+        },
+      });
+    }
+
     const template = EMAIL_TEMPLATES[input.next];
     if (template) {
       await queueOrderEmail(tx, { orderId: order.id, to: order.email, template, dedupeKey: "" });
@@ -88,6 +101,7 @@ export async function setOrderStatus(input: {
   });
 
   revalidatePath("/admin");
+  revalidatePath("/admin/verification");
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${input.orderNo}`);
   revalidatePath(`/order/${input.orderNo}`);

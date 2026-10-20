@@ -115,7 +115,8 @@ export function AdminShell({
                 <UserBlock user={user} />
               </SheetContent>
             </Sheet>
-            <span className="label-caps text-muted-foreground">Admin</span>
+            {/* mobile only — the desktop sidebar header already says "Admin" */}
+            <span className="label-caps text-muted-foreground lg:hidden">Admin</span>
           </div>
           <div className="flex items-center gap-3">
             <Link
