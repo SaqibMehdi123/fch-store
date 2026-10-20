@@ -40,7 +40,15 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
           {images.map((src, i) => (
             <div key={src + i} className="w-full shrink-0 snap-center">
               { }
-              <img src={src} alt={`${name} — view ${i + 1}`} className="aspect-[3/4] w-full object-cover" draggable={false} />
+              <img
+                src={src}
+                alt={`${name} — view ${i + 1}`}
+                // View 1 is the product-page LCP element; the rest lazy-load
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchPriority={i === 0 ? "high" : undefined}
+                className="aspect-[3/4] w-full object-cover"
+                draggable={false}
+              />
             </div>
           ))}
         </div>
@@ -78,7 +86,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                 )}
               >
                 { }
-                <img src={src} alt="" className="aspect-[3/4] w-full object-cover" />
+                <img src={src} alt="" loading="lazy" className="aspect-[3/4] w-full object-cover" />
               </button>
             ))}
           </div>
@@ -99,6 +107,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
           <img
             src={images[active]}
             alt={`${name} — view ${active + 1}`}
+            fetchPriority={active === 0 ? "high" : undefined}
             className="aspect-[3/4] w-full object-cover transition-transform duration-200 ease-out"
             style={{ transform: zooming ? "scale(1.75)" : "scale(1)", transformOrigin: origin }}
           />

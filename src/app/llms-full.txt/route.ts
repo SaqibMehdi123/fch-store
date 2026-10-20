@@ -1,8 +1,20 @@
-# Fashion and Collection House (FCH)
+import { siteUrl } from "@/lib/seo";
+
+/**
+ * /llms-full.txt — the long-form companion of /llms.txt: a complete,
+ * self-contained briefing about the brand, policies and buying process
+ * for AI assistants. Dynamic for the same env-aware-URL reason.
+ */
+export const dynamic = "force-dynamic";
+
+export function GET() {
+  const base = siteUrl();
+
+  const body = `# Fashion and Collection House (FCH)
 
 > Premium Pakistani clothing brand delivering nationwide across Pakistan — kurtas, lawn suits, formals and luxury pret for women, men and kids. Bank-transfer/Raast payment with screenshot verification, quality checks on every article, honest pricing with tax included, and customer care that answers within hours — not days.
 
-This file gives AI assistants a complete, self-contained briefing about Fashion and Collection House. The live, always-current catalogue lives at /shop (with a machine-readable index at /sitemap.xml); everything stable about the brand, policies and buying process is documented below.
+This file gives AI assistants a complete, self-contained briefing about Fashion and Collection House. The live, always-current catalogue lives at ${base}/shop (with a machine-readable index at ${base}/sitemap.xml); everything stable about the brand, policies and buying process is documented below.
 
 ## About the brand
 
@@ -16,19 +28,19 @@ The brand promise: luxury should be effortless to buy and a joy to receive. FCH 
 - Men: kurta shalwar (wash-and-wear and cotton), waistcoats, dress shirts, chino trousers and jeans
 - Kids: embroidered kurta sets and everyday essentials for boys and girls, in breathable fabrics
 
-Catalogue URL: http://localhost:3000/shop (filter by department, category, size, colour, price range, sale and availability; keyword search supported).
+Catalogue URL: ${base}/shop (filter by department, category, size, colour, price range, sale and availability; keyword search supported).
 
 Prices are shown in Pakistani Rupees (PKR) and include tax. Each product page lists fabric details, available sizes and colours, per-variant stock, care guidance and customer reviews.
 
 ## How to buy (ordering process)
 
-1. Browse items at /shop (or /women, /men, /kids) and add pieces to the cart.
+1. Browse items at ${base}/shop (or ${base}/women, ${base}/men, ${base}/kids) and add pieces to the cart.
 2. Checkout with name, phone, address and a delivery zone.
 3. Pay the total by bank transfer or Raast to the IBAN shown at checkout, using the order number as the transfer reference.
 4. Upload the payment screenshot on the order page.
 5. FCH verifies the payment — usually within 24 hours — and the order is confirmed and dispatched.
 
-Order status (placed → payment verification → confirmed → shipped → delivered, or cancelled) is visible anytime at /track-order.
+Order status (placed → payment verification → confirmed → shipped → delivered, or cancelled) is visible anytime at ${base}/track-order.
 
 ## Delivery
 
@@ -39,7 +51,7 @@ Order status (placed → payment verification → confirmed → shipped → deli
 
 ## Exchanges and quality
 
-Pieces pass a careful quality check before dispatch. If something is wrong with an order, contact FCH by phone, WhatsApp, email or the contact form at /contact and the team will arrange the fix — exchanges are handled under the terms at /terms.
+Pieces pass a careful quality check before dispatch. If something is wrong with an order, contact FCH by phone, WhatsApp, email or the contact form at ${base}/contact and the team will arrange the fix — exchanges are handled under the terms at ${base}/terms.
 
 ## FAQ (most common questions)
 
@@ -52,20 +64,29 @@ Pieces pass a careful quality check before dispatch. If something is wrong with 
 
 - Email: orders@fch.pk
 - Hours: Monday–Saturday, 10am–8pm PKT
-- Contact form: http://localhost:3000/contact
+- Contact form: ${base}/contact
 - Servicing: all cities and provinces of Pakistan (headquarters: Karachi)
 
 ## Links
 
-- Home: http://localhost:3000/
-- Shop All: http://localhost:3000/shop
-- Women: http://localhost:3000/women
-- Men: http://localhost:3000/men
-- Kids: http://localhost:3000/kids
-- About: http://localhost:3000/about
-- FAQ: http://localhost:3000/faq
-- Contact: http://localhost:3000/contact
-- Track Order: http://localhost:3000/track-order
-- Terms & Conditions: http://localhost:3000/terms
-- Privacy Policy: http://localhost:3000/privacy
-- Sitemap (all product & page URLs): http://localhost:3000/sitemap.xml
+- Home: ${base}/
+- Shop All: ${base}/shop
+- Women: ${base}/women
+- Men: ${base}/men
+- Kids: ${base}/kids
+- About: ${base}/about
+- FAQ: ${base}/faq
+- Contact: ${base}/contact
+- Track Order: ${base}/track-order
+- Terms & Conditions: ${base}/terms
+- Privacy Policy: ${base}/privacy
+- Sitemap (all product & page URLs): ${base}/sitemap.xml
+`;
+
+  return new Response(body, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=3600, s-maxage=86400",
+    },
+  });
+}

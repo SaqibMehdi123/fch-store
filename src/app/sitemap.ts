@@ -24,13 +24,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/about",
     "/contact",
     "/faq",
+    "/track-order",
     "/terms",
     "/privacy",
   ].map((path) => ({
     url: `${BASE}${path}`,
     lastModified: now,
     changeFrequency: path === "" || path.startsWith("/w") || path.startsWith("/m") || path.startsWith("/k") ? "daily" : "weekly",
-    priority: path === "" ? 1 : 0.7,
+    priority: path === "" ? 1 : path === "/track-order" ? 0.5 : 0.7,
   }));
 
   try {

@@ -20,6 +20,22 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  images: {
+    // Product/banner media lives on Cloudinary (signed uploads via
+    // src/lib/upload.ts); the local /uploads + /placeholders fallbacks are
+    // same-origin and need no pattern. This unlocks next/image optimization
+    // (AVIF/WebP + responsive srcset) for the storefront's LCP surfaces.
+    remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
+    ],
+    // The seeded catalogue ships SVG placeholders; without this the image
+    // optimizer 400s every SVG src. SVGs are served as-is (never rasterized),
+    // and the CSP + disposition sandbox them exactly as the Next.js docs
+    // prescribe for allowing SVG through /_next/image.
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },

@@ -65,6 +65,10 @@ export function BannerCarousel({ slides }: { slides: BannerSlide[] }) {
           <img
             src={slide.imageUrl}
             alt={`${slide.title} — ${slide.subtitle ?? ""}`}
+            // First paint slide is the home LCP element: eager + high priority;
+            // off-screen slides stay lazy so they don't compete for bandwidth.
+            loading={i === 0 ? "eager" : "lazy"}
+            fetchPriority={i === 0 ? "high" : undefined}
             className={cn(
               "h-full w-full object-cover",
               i === index && !paused && "animate-[fch-ken-burns_7s_ease-out_forwards]"

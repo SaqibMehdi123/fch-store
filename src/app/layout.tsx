@@ -35,6 +35,21 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   applicationName: "FCH",
   authors: [{ name: "Fashion and Collection House" }],
+  // Search-console ownership verification without code deploys: set
+  // GOOGLE_SITE_VERIFICATION / BING_SITE_VERIFICATION in the host env
+  // (Vercel → Settings → Environment Variables) and redeploy.
+  ...(process.env.GOOGLE_SITE_VERIFICATION || process.env.BING_SITE_VERIFICATION
+    ? {
+        verification: {
+          ...(process.env.GOOGLE_SITE_VERIFICATION
+            ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+            : {}),
+          ...(process.env.BING_SITE_VERIFICATION
+            ? { other: { "msvalidate.01": process.env.BING_SITE_VERIFICATION } }
+            : {}),
+        },
+      }
+    : {}),
   openGraph: {
     title: "Fashion and Collection House",
     description: "Premium Pakistani clothing delivered nationwide.",

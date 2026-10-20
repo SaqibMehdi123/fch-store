@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { discountPercent, formatPKR } from "@/lib/format";
 import { WishlistHeart } from "@/components/store/wishlist-heart";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,16 @@ import type { ProductCardData } from "@/lib/products";
  * Product card — editorial style: image-forward, minimal chrome.
  * Hover: secondary image cross-fade + subtle zoom; gold "SALE −N%" chip;
  * wishlist heart floats top-right; muted "Out of Stock" state.
+ *
+ * Uses next/image so cards ship AVIF/WebP with a responsive srcset tuned
+ * to the 2-up (mobile) / 4-up (desktop) grids they appear in — a direct
+ * LCP win on the home rails and every listing page.
  */
+// Covers every surface cards appear on: home rails (72vw mobile → 25% lg),
+// listing grids (50vw mobile → ~26vw xl) and the related-products grid.
+const CARD_SIZES =
+  "(min-width: 1280px) 25vw, (min-width: 1024px) 35vw, (min-width: 640px) 46vw, 70vw";
+
 export function ProductCard({
   product,
   priority = false,
@@ -30,32 +40,33 @@ export function ProductCard({
         >
           <div className="relative aspect-[3/4]">
             {product.image ? (
-              <>
-                { }
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  loading={priority ? "eager" : "lazy"}
-                  className={cn(
-                    "absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out",
-                    product.imageHover && "group-hover:opacity-0"
-                  )}
-                />
-                {product.imageHover && (
-                   
-                  <img
-                    src={product.imageHover}
-                    alt=""
-                    aria-hidden
-                    loading="lazy"
-                    className="absolute inset-0 h-full w-full scale-[1.04] object-cover opacity-0 transition-all duration-700 ease-out group-hover:opacity-100"
-                  />
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                sizes={CARD_SIZES}
+                priority={priority}
+                loading={priority ? undefined : "lazy"}
+                className={cn(
+                  "object-cover transition-all duration-700 ease-out",
+                  product.imageHover && "group-hover:opacity-0"
                 )}
-              </>
+              />
             ) : (
               <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 {product.name}
               </div>
+            )}
+            {product.imageHover && product.image && (
+              <Image
+                src={product.imageHover}
+                alt=""
+                aria-hidden
+                fill
+                sizes={CARD_SIZES}
+                loading="lazy"
+                className="scale-[1.04] object-cover opacity-0 transition-all duration-700 ease-out group-hover:opacity-100"
+              />
             )}
           </div>
         </Link>

@@ -50,6 +50,11 @@ export default async function HomePage() {
       {popup && <HomePopupAd popup={popup} />}
 
       {/* ── hero — banner carousel from the banners table ── */}
+      {data.banners.length === 0 && (
+        // SEO fallback: the carousel owns the home h1 when slides exist;
+        // with no banners configured the page would otherwise ship without one.
+        <h1 className="sr-only">Fashion and Collection House — Premium Pakistani Clothing, Nationwide</h1>
+      )}
       <BannerCarousel slides={data.banners} />
 
       {/* ── trust strip ── */}

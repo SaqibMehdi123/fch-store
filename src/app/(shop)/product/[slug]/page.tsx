@@ -64,6 +64,13 @@ export default async function ProductPage({ params }: { params: Params }) {
   const off = discountPercent(product.price, product.salePrice);
   const price = product.salePrice ?? product.price;
 
+  // Google treats these as "recommended" Product fields — their absence can
+  // cost the rich-result treatment in Search. priceValidUntil rolls forward
+  // so the offer never reads as stale to the crawler.
+  const priceValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+
   // leaf → root; the root category gets its own department page (mirrors the breadcrumb nav below)
   const path = product.categoryPath.slice().reverse();
   const rootSlug = path.length ? path[path.length - 1].slug : null;
@@ -96,8 +103,27 @@ export default async function ProductPage({ params }: { params: Params }) {
         url: absUrl(`/product/${product.slug}`),
         priceCurrency: "PKR",
         price,
+        priceValidUntil,
         availability: product.totalStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
         itemCondition: "https://schema.org/NewCondition",
+        shippingDetails: {
+          "@type": "OfferShippingDetails",
+          shippingDestination: { "@type": "DefinedRegion", addressCountry: "PK" },
+          deliveryTime: {
+            "@type": "ShippingDeliveryTime",
+            handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 1, unitCode: "DAY" },
+            transitTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 6, unitCode: "DAY" },
+          },
+        },
+        hasMerchantReturnPolicy: {
+          "@type": "MerchantReturnPolicy",
+          applicableCountry: "PK",
+          returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+          merchantReturnDays: 7,
+          returnMethod: "https://schema.org/ReturnByMail",
+          returnFees: "https://schema.org/FreeReturn",
+          merchantReturnLink: absUrl("/terms"),
+        },
       },
       ...(product.ratingCount > 0 && {
         aggregateRating: {
