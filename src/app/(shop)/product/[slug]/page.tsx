@@ -16,6 +16,15 @@ import { JsonLd, absUrl, breadcrumbLd } from "@/lib/seo";
 
 type Params = Promise<{ slug: string }>;
 
+/**
+ * On-demand ISR — product pages are cookie-free and parameter-free, so they
+ * render once and cache at the edge for 15 minutes. Uncached SSR was taking
+ * 5-6s TTFB (multi-hop Neon queries), which starves crawler budgets — Bing
+ * was reporting product URLs as "discovered but not crawled". Edge hits land
+ * in ~100-300ms, keeping the catalogue crawl-friendly.
+ */
+export const revalidate = 900;
+
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
