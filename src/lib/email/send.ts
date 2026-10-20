@@ -43,7 +43,36 @@ export function appUrl(): string {
 
 type TransportResult = { ok: true; via: string } | { ok: false; error: string };
 
-async function deliver(to: string, subject: string, html: string): Promise<TransportResult> {
+/** Plain-text alternative derived from the branded HTML — deliverability +
+ *  readable fallback for text-only clients and smartwatch previews. */
+export function htmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|tr|h\d|table)>/gi, "\n")
+    .replace(/<\/(td|th)>/gi, "  ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&middot;/g, "·")
+    .replace(/&minus;/g, "-")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&copy;/g, "©")
+    .replace(/&zwnj;/g, "")
+    .replace(/\n\s*\n\s*\n+/g, "\n\n")
+    .replace(/[^\S\n]+ /g, " ")
+    .split("\n")
+    .map((l) => l.trim())
+    .join("\n")
+    .trim();
+}
+
+async function deliver(to: string, subject: string, html: string, text?: string): Promise<TransportResult> {
   const from = process.env.EMAIL_FROM ?? "FCH <onboarding@resend.dev>";
 
   if (process.env.RESEND_API_KEY) {
@@ -54,7 +83,7 @@ async function deliver(to: string, subject: string, html: string): Promise<Trans
           Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ from, to: [to], subject, html }),
+        body: JSON.stringify({ from, to: [to], subject, html, text: text ?? htmlToText(html) }),
       });
       if (!res.ok) {
         const body = await res.text().catch(() => "");
@@ -74,7 +103,7 @@ async function deliver(to: string, subject: string, html: string): Promise<Trans
         secure: process.env.SMTP_SECURE === "true",
         auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
       });
-      await mailer.sendMail({ from, to, subject, html });
+      await mailer.sendMail({ from, to, subject, html, text: text ?? htmlToText(html) });
       return { ok: true, via: "smtp" };
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : "SMTP send failed" };

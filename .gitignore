@@ -86,3 +86,6 @@ prompt
 test
 public/uploads/
 tool-results/
+
+/scripts/email-previews/
+/scripts/overflow-test-*.html
