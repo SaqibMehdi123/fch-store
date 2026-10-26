@@ -1,11 +1,7 @@
 import Link from "next/link";
-import { SearchX } from "lucide-react";
+import { CloudOff, SearchX } from "lucide-react";
 import {
-  getCategoryBranch,
-  getCategoryTree,
-  getDepartment,
-  getFilterFacets,
-  listProducts,
+  getListingData,
   parseShopParams,
   shopHref,
 } from "@/lib/products";
@@ -54,13 +50,35 @@ export async function ListingPage({
     department,
   });
 
-  const [result, tree, facets, dept, branch] = await Promise.all([
-    listProducts(query),
-    department ? Promise.resolve([]) : getCategoryTree(),
-    getFilterFacets(department),
-    department ? getDepartment(department) : Promise.resolve(null),
-    query.categorySlug ? getCategoryBranch(query.categorySlug) : Promise.resolve(null),
-  ]);
+  const data = await getListingData(department, query);
+
+  // DB unreachable — render a graceful notice (HTTP 200) instead of a 500.
+  if (!data.ok) {
+    const fallbackTitle = department ? department.charAt(0).toUpperCase() + department.slice(1) : "Shop All";
+    return (
+      <div className="mx-auto max-w-7xl px-6 py-8 lg:py-12">
+        <header className="border-b border-stone pb-6">
+          <nav aria-label="Breadcrumb" className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            <Link href="/" className="transition-colors hover:text-gold">Home</Link>
+            <span aria-hidden className="mx-2">/</span>
+            <span>{fallbackTitle}</span>
+          </nav>
+          <h1 className="mt-3 font-display text-3xl capitalize sm:text-4xl">{fallbackTitle}</h1>
+        </header>
+        <div className="mt-16 flex flex-col items-center rounded-sm border border-stone bg-card px-6 py-16 text-center">
+          <CloudOff className="h-8 w-8 text-gold" strokeWidth={1.5} />
+          <h2 className="mt-4 font-display text-2xl">Our catalog is taking a short break</h2>
+          <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+            We&apos;re having trouble loading the collection right now — everything should be back shortly.
+            Please refresh in a few minutes.
+          </p>
+          <Link href="/" className="btn-luxury mt-6">Back to home</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const { result, tree, facets, dept, branch } = data;
 
   const deptName = dept?.root.name ?? null;
   const copy = dept ? DEPARTMENT_COPY[dept.root.slug] : undefined;

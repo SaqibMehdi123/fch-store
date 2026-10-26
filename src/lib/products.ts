@@ -7,6 +7,7 @@
  * server→client boundary is converted to plain numbers.
  */
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { db } from "@/lib/db";
 import { toNumber } from "@/lib/format";
 import type { Prisma, Product, Category } from "@prisma/client";
@@ -362,6 +363,70 @@ export const getFilterFacets = cache(
     };
   }
 );
+
+// ---------------------------------------------------------------
+// Outage resilience — the catalog must degrade gracefully when the
+// DB is unreachable (e.g. the database provider suspends compute or
+// a monthly allowance is exhausted). Successful reads go through
+// Next's data cache (revalidate 120s) so repeat hits don't re-query
+// the DB, plus a per-lambda last-known-good memo: while the DB is
+// down, stale data is served instead of throwing. null → caller
+// renders a "temporarily unavailable" state instead of a hard 500.
+// ---------------------------------------------------------------
+
+const listingMemo = new Map<string, { at: number; value: unknown }>();
+
+async function resilientList<T>(cacheKey: string[], fn: () => Promise<T>): Promise<T | null> {
+  const memoKey = cacheKey.join("|");
+  const memo = listingMemo.get(memoKey);
+  if (memo && Date.now() - memo.at < 120_000) return memo.value as T;
+  try {
+    const value = await unstable_cache(fn, cacheKey, { revalidate: 120 })();
+    if (listingMemo.size > 500) listingMemo.clear();
+    listingMemo.set(memoKey, { at: Date.now(), value });
+    return value;
+  } catch (err) {
+    console.error(`[db-outage] ${memoKey} failed — serving ${memo ? "last-known" : "degraded"} response`);
+    return memo ? (memo.value as T) : null;
+  }
+}
+
+export type ListingData =
+  | {
+      ok: true;
+      result: ShopResult;
+      tree: CategoryNode[];
+      facets: FilterFacets;
+      dept: { root: CategoryNode; categoryIds: string[] } | null;
+      branch: { category: Category; categoryIds: string[] } | null;
+    }
+  | { ok: false };
+
+/**
+ * Everything a ListingPage render needs, resilient to DB outages.
+ * Each read is cached and independently guarded — if the DB is down
+ * the aggregate returns { ok: false } so the page can render a
+ * graceful notice (HTTP 200) instead of crashing with a 500.
+ */
+export async function getListingData(department: string | null, query: ShopQuery): Promise<ListingData> {
+  const categorySlug = query.categorySlug;
+  const [result, tree, facets, dept, branch] = await Promise.all([
+    resilientList(["shop-list", JSON.stringify(query)], () => listProducts(query)),
+    department
+      ? Promise.resolve([])
+      : resilientList(["category-tree"], () => getCategoryTree()).then((t) => t ?? []),
+    resilientList(["facets", department ?? "all"], () => getFilterFacets(department)),
+    department
+      ? resilientList(["department", department], () => getDepartment(department))
+      : Promise.resolve(null),
+    categorySlug
+      ? resilientList(["branch", categorySlug], () => getCategoryBranch(categorySlug))
+      : Promise.resolve(null),
+  ]);
+
+  if (!result || !facets) return { ok: false };
+  return { ok: true, result, tree, facets, dept, branch };
+}
 
 // ---------------------------------------------------------------
 // Product detail
