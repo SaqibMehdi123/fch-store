@@ -29,6 +29,9 @@ export default async function AdminSettingsPage() {
         free_shipping_threshold: map.get("free_shipping_threshold") ?? "5000",
         payment_upload_deadline_hours: map.get("payment_upload_deadline_hours") ?? "24",
         payment_approval_deadline_hours: map.get("payment_approval_deadline_hours") ?? "48",
+        courier_leopards_api_key: map.get("courier_leopards_api_key") ?? "",
+        courier_leopards_api_password: map.get("courier_leopards_api_password") ?? "",
+        courier_postex_api_token: map.get("courier_postex_api_token") ?? "",
       }}
     />
   );

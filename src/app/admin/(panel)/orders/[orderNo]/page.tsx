@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { getAdminOrder } from "@/lib/admin/queries";
 import { formatPKR, formatDateTime, ORDER_STATUS_LABELS } from "@/lib/format";
 import { OrderActions } from "@/components/admin/order-actions";
+import { CourierTrackingCard } from "@/components/admin/courier-tracking";
+import type { TrackingEvent } from "@/lib/tracking";
 
 export const metadata: Metadata = {
   title: "Order Detail",
@@ -170,6 +172,15 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
         {/* actions rail */}
         <div className="space-y-6">
+          <CourierTrackingCard
+            orderNo={order.orderNo}
+            courierName={order.courierName}
+            trackingNumber={order.trackingNumber}
+            trackingStatus={order.trackingStatus}
+            trackingEvents={(order.trackingEvents as TrackingEvent[] | null) ?? null}
+            trackingCheckedAt={order.trackingCheckedAt ? order.trackingCheckedAt.toISOString() : null}
+          />
+
           <OrderActions
             orderNo={order.orderNo}
             status={order.status}

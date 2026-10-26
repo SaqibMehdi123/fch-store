@@ -22,6 +22,9 @@ type SettingsFormState = {
   free_shipping_threshold: string;
   payment_upload_deadline_hours: string;
   payment_approval_deadline_hours: string;
+  courier_leopards_api_key: string;
+  courier_leopards_api_password: string;
+  courier_postex_api_token: string;
 };
 
 const field = "w-full rounded-sm border border-stone bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gold";
@@ -62,6 +65,9 @@ export function SettingsForm({ initial }: { initial: SettingsFormState }) {
       free_shipping_threshold: Number(form.free_shipping_threshold) || 0,
       payment_upload_deadline_hours: Number(form.payment_upload_deadline_hours) || 24,
       payment_approval_deadline_hours: Number(form.payment_approval_deadline_hours) || 48,
+      courier_leopards_api_key: form.courier_leopards_api_key,
+      courier_leopards_api_password: form.courier_leopards_api_password,
+      courier_postex_api_token: form.courier_postex_api_token,
     };
     startTransition(async () => {
       const res = await saveSettings(payload);
@@ -177,6 +183,26 @@ export function SettingsForm({ initial }: { initial: SettingsFormState }) {
           <div>
             <label className={label} htmlFor="s-tt">TikTok URL</label>
             <input id="s-tt" value={form.tiktok_url} onChange={(e) => set("tiktok_url", e.target.value)} className={field} />
+          </div>
+        </Section>
+
+        <Section
+          title="Courier integrations"
+          hint="Optional — enables live delivery-status pulls on the order page. Leopards credentials come from the Leopards merchant portal; the PostEx token from your PostEx dashboard. Without them, tracking falls back to a one-click link to the courier's website."
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className={label} htmlFor="s-leopards-key">Leopards API key</label>
+              <input id="s-leopards-key" value={form.courier_leopards_api_key} onChange={(e) => set("courier_leopards_api_key", e.target.value)} className={`${field} font-mono`} autoComplete="off" />
+            </div>
+            <div>
+              <label className={label} htmlFor="s-leopards-pass">Leopards API password</label>
+              <input id="s-leopards-pass" type="password" value={form.courier_leopards_api_password} onChange={(e) => set("courier_leopards_api_password", e.target.value)} className={`${field} font-mono`} autoComplete="new-password" />
+            </div>
+          </div>
+          <div>
+            <label className={label} htmlFor="s-postex-token">PostEx API token</label>
+            <input id="s-postex-token" type="password" value={form.courier_postex_api_token} onChange={(e) => set("courier_postex_api_token", e.target.value)} className={`${field} font-mono`} autoComplete="new-password" />
           </div>
         </Section>
 

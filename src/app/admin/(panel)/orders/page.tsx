@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { listAdminOrders } from "@/lib/admin/queries";
 import { formatPKR, formatDate, ORDER_STATUS_LABELS } from "@/lib/format";
+import { TRACKING_STATUS_LABELS } from "@/lib/tracking";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -114,6 +115,18 @@ export default async function OrdersPage({
                 </td>
                 <td className="px-4 py-3">
                   <span className="text-xs uppercase tracking-wide">{ORDER_STATUS_LABELS[o.status] ?? o.status}</span>
+                  {o.trackingStatus && (
+                    <span
+                      className={cn(
+                        "mt-1 block w-fit rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                        o.trackingStatus === "delivered" && "bg-emerald-100 text-emerald-800",
+                        ["in_transit", "out_for_delivery", "picked_up", "booked"].includes(o.trackingStatus) && "bg-gold/15 text-gold",
+                        ["undelivered", "returned"].includes(o.trackingStatus) && "bg-destructive/10 text-destructive"
+                      )}
+                    >
+                      {TRACKING_STATUS_LABELS[o.trackingStatus as keyof typeof TRACKING_STATUS_LABELS] ?? o.trackingStatus}
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-right font-medium">{formatPKR(o.total)}</td>
               </tr>

@@ -120,6 +120,7 @@ export type AdminOrderRow = {
   createdAt: Date;
   itemCount: number;
   paymentStatus: PaymentStatus | null;
+  trackingStatus: string | null;
 };
 
 export async function listAdminOrders(opts: {
@@ -157,6 +158,7 @@ export async function listAdminOrders(opts: {
         city: true,
         total: true,
         createdAt: true,
+        trackingStatus: true,
         _count: { select: { items: true } },
         payments: { orderBy: { createdAt: "desc" }, take: 1, select: { status: true } },
       },
@@ -176,6 +178,7 @@ export async function listAdminOrders(opts: {
       createdAt: o.createdAt,
       itemCount: o._count.items,
       paymentStatus: o.payments[0]?.status ?? null,
+      trackingStatus: o.trackingStatus,
     })),
     total,
     page,

@@ -168,6 +168,9 @@ model Order {
   customerNote    String?         @map("customer_note") @db.Text
   courierName     String?         @map("courier_name")
   trackingNumber  String?         @map("tracking_number")
+  trackingStatus  String?         @map("tracking_status")
+  trackingEvents  Json?           @map("tracking_events")
+  trackingCheckedAt DateTime?     @map("tracking_checked_at")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 

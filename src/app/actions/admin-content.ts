@@ -396,6 +396,9 @@ const SETTING_KEYS = [
   "free_shipping_threshold",
   "payment_upload_deadline_hours",
   "payment_approval_deadline_hours",
+  "courier_leopards_api_key",
+  "courier_leopards_api_password",
+  "courier_postex_api_token",
 ] as const;
 
 const settingsSchema = z.object({
@@ -420,6 +423,9 @@ const settingsSchema = z.object({
   free_shipping_threshold: z.number().min(0).max(9_999_999),
   payment_upload_deadline_hours: z.number().int().min(1).max(168),
   payment_approval_deadline_hours: z.number().int().min(1).max(168),
+  courier_leopards_api_key: z.string().trim().max(120).default(""),
+  courier_leopards_api_password: z.string().trim().max(120).default(""),
+  courier_postex_api_token: z.string().trim().max(200).default(""),
 });
 
 export type SettingsInput = z.infer<typeof settingsSchema>;

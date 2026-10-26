@@ -21,6 +21,9 @@ export type SiteSettings = {
   freeShippingThreshold: number;
   paymentUploadDeadlineHours: number;
   paymentApprovalDeadlineHours: number;
+  courierLeopardsApiKey: string;
+  courierLeopardsApiPassword: string;
+  courierPostexApiToken: string;
 };
 
 const DEFAULTS: SiteSettings = {
@@ -39,6 +42,9 @@ const DEFAULTS: SiteSettings = {
   freeShippingThreshold: 5000,
   paymentUploadDeadlineHours: 24,
   paymentApprovalDeadlineHours: 48,
+  courierLeopardsApiKey: "",
+  courierLeopardsApiPassword: "",
+  courierPostexApiToken: "",
 };
 
 export const getSettings = cache(async (): Promise<SiteSettings> => {
@@ -61,6 +67,9 @@ export const getSettings = cache(async (): Promise<SiteSettings> => {
       freeShippingThreshold: Number(map.get("free_shipping_threshold") ?? DEFAULTS.freeShippingThreshold),
       paymentUploadDeadlineHours: Number(map.get("payment_upload_deadline_hours") ?? DEFAULTS.paymentUploadDeadlineHours),
       paymentApprovalDeadlineHours: Number(map.get("payment_approval_deadline_hours") ?? DEFAULTS.paymentApprovalDeadlineHours),
+      courierLeopardsApiKey: map.get("courier_leopards_api_key") ?? DEFAULTS.courierLeopardsApiKey,
+      courierLeopardsApiPassword: map.get("courier_leopards_api_password") ?? DEFAULTS.courierLeopardsApiPassword,
+      courierPostexApiToken: map.get("courier_postex_api_token") ?? DEFAULTS.courierPostexApiToken,
     };
   } catch {
     // DB not reachable/migrated yet — layout shell must still render

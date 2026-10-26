@@ -6,6 +6,8 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { upsertProduct } from "@/app/actions/admin";
 import { slugify } from "@/lib/utils";
+import { ProductImagesEditor, type ImageRow } from "@/components/admin/product-images-editor";
+import { VariantGenerator, type GeneratorRow } from "@/components/admin/variant-generator";
 
 type VariantRow = {
   key: string;
@@ -17,8 +19,6 @@ type VariantRow = {
   stock: number;
   lowStockThreshold: number;
 };
-
-type ImageRow = { url: string; publicId: string };
 
 type ProductFormValues = {
   id?: string;
@@ -71,7 +71,7 @@ export function ProductForm({
       salePrice: "",
       isFeatured: false,
       isActive: true,
-      images: [{ url: "", publicId: "" }],
+      images: [],
       variants: [emptyVariant()],
     }
   );
@@ -81,6 +81,31 @@ export function ProductForm({
 
   const setVariant = (key: string, patch: Partial<VariantRow>) =>
     setValues((v) => ({ ...v, variants: v.variants.map((row) => (row.key === key ? { ...row, ...patch } : row)) }));
+
+  const applyGenerated = (rows: GeneratorRow[]) =>
+    setValues((v) => ({
+      ...v,
+      variants: rows.map((r) => ({
+        key: Math.random().toString(36).slice(2),
+        id: r.id,
+        colorName: r.colorName,
+        colorHex: r.colorHex,
+        size: r.size,
+        sku: r.sku,
+        stock: r.stock,
+        lowStockThreshold: r.lowStockThreshold,
+      })),
+    }));
+
+  const applyStockToAll = () => {
+    if (!values.variants.length) return;
+    const stock = values.variants[0].stock;
+    setValues((v) => ({
+      ...v,
+      variants: v.variants.map((row) => ({ ...row, stock })),
+    }));
+    toast.info(`Stock ${stock} copied to all ${values.variants.length} variants.`);
+  };
 
   const slugPreview = useMemo(() => slugify(values.slug || values.name || ""), [values.slug, values.name]);
 
@@ -185,61 +210,39 @@ export function ProductForm({
 
         {/* images */}
         <section className="rounded-sm border border-stone bg-card p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg">Images</h2>
-            <button
-              type="button"
-              onClick={() => set("images", [...values.images, { url: "", publicId: "" }])}
-              className="inline-flex items-center gap-1.5 text-xs text-gold transition-opacity hover:opacity-80"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add image
-            </button>
+          <h2 className="font-display text-lg">Images</h2>
+          <div className="mt-4">
+            <ProductImagesEditor images={values.images} onChange={(imgs) => set("images", imgs)} />
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Paste image URLs (e.g. the seeded placeholders at /seed/…). Cloudinary uploads land in Phase 4.
-          </p>
-          <ul className="mt-3 space-y-2">
-            {values.images.map((img, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="flex h-11 w-9 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-stone">
-                  {img.url && (
-                    <img src={img.url} alt="" className="h-full w-full object-cover" />
-                  )}
-                </span>
-                <input
-                  className={inputCls}
-                  value={img.url}
-                  onChange={(e) => set("images", values.images.map((row, j) => (j === i ? { ...row, url: e.target.value } : row)))}
-                  placeholder="/seed/p1-a.svg"
-                />
-                <button
-                  type="button"
-                  aria-label={`Remove image ${i + 1}`}
-                  onClick={() => set("images", values.images.filter((_, j) => j !== i))}
-                  className="shrink-0 rounded-sm border border-stone p-2 text-muted-foreground transition-colors hover:text-destructive"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
-          </ul>
         </section>
 
         {/* variants */}
         <section className="rounded-sm border border-stone bg-card p-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-display text-lg">Variants</h2>
             <button
               type="button"
               onClick={() => set("variants", [...values.variants, emptyVariant()])}
               className="inline-flex items-center gap-1.5 text-xs text-gold transition-opacity hover:opacity-80"
             >
-              <Plus className="h-3.5 w-3.5" /> Add variant
+              <Plus className="h-3.5 w-3.5" /> Add single variant
             </button>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            SKU auto-generates from slug + color + size when left empty. Stock 0 shows “Out of Stock” on the store.
+            Use Quick build below for colour × size combinations, or add rows manually. SKU auto-generates when left empty.
           </p>
+          <div className="mt-4">
+            <VariantGenerator existing={values.variants} onGenerate={applyGenerated} />
+          </div>
+          {values.variants.length > 1 && (
+            <button
+              type="button"
+              onClick={applyStockToAll}
+              className="mt-3 text-[11px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-gold"
+            >
+              Copy first row's stock to all variants
+            </button>
+          )}
           <ul className="mt-3 space-y-3">
             {values.variants.map((v) => (
               <li key={v.key} className="rounded-sm border border-stone p-3">
