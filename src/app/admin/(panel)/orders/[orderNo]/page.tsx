@@ -204,7 +204,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               </ul>
             )}
             <p className="border-t border-stone px-5 py-3 text-[11px] text-muted-foreground">
-              Emails are queued and send automatically once the Phase 5 mailer is connected.
+              Emails are queued and sent automatically after each status change.
             </p>
           </section>
         </div>

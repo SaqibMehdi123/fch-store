@@ -89,3 +89,4 @@ tool-results/
 
 /scripts/email-previews/
 /scripts/overflow-test-*.html
+scripts/pg-repro/
